@@ -10,7 +10,8 @@ function NumberFormatter() {
     
     this.consts = {
         regexStrNonNumeric: '[^0-9\\.]',
-        negativeParanRegex: '^\\(([^\\)]+)\\)$'
+        negativeParanRegex: '^\\(([^\\)]+)\\)$',
+        numberRegex: new RegExp('^([0-9]*)\\.([0-9]*)$')
     };
     
     
@@ -29,7 +30,7 @@ function NumberFormatter() {
             console.log('[' + numberString + '] Checking params...');
         }
         if (typeof numberString != 'string') {
-            throw new TypeError('Expecting a string as number param');
+            throw new TypeError('Expecting a string as numberString param');
         }
         options = typeof options !== 'undefined' ? options : new this.parseNumberSimpleOptions();
         // if (typeof options != 'parseNumberSimpleOptions') {
@@ -192,26 +193,249 @@ function NumberFormatter() {
      * Formats a number (object) into a string, based on the options.
      */
     this.formatNumber = function(number, options, log) {
-        // TODO
-        // Check Params
+        // handle log param
+        log = typeof log !== 'undefined' ? log : false;
+        
+        // check other params
+        if (log) {
+            console.log('[' + number + '] Checking params...');
+        }
+        if (typeof number != 'number') {
+            throw new TypeError('Expecting a number as number param');
+        }
+        options = typeof options !== 'undefined' ? options : new this.formatNumberOptions();
+        if (log) {
+            console.log('[' + number + '] Options=' + options.print());
+            console.log('[' + number + '] Params OK');
+        }
         
         // Compile masks
+        if (!options.compiled) {
+            if (log) {
+                console.log('Compiling options...');
+            }
+            options.compile(new this.formatMaskCompiled(options.groupMaskStr), new this.formatMaskCompiled(options.decimalMaskStr));
+        }
         
-        // run formatting on compiled masks
-        return this.formatNumberPreCompiled(number, options, log);
-    };
-    
-    /**
-     * Formats a number (object) into a string, based on the options.
-     * This is for optimisation, to have the format mask pre-compiled for
-     * re-use.
-     */
-    this.formatNumberPreCompiled = function(number, options, log) {
-        // TODO
+        // break up number into 2 strings, 1 for the integer and 1 for the decimals
+        if (log) {
+            console.log('Splitting number to parts...');
+        }
+        var match = this.consts.numberRegex.exec(number);
+        var integerPartStr = match[1];
+        var decimalPartStr = match[2];
+        if (log) {
+            console.log('Parts=integer:' + integerPartStr + ',decimal:' + decimalPartStr);
+        }
         
         // apply group mask
+        if (log) {
+            console.log('Applying group mask...');
+        }
+        var formatterIntPartStr = options.groupMask.apply(integerPartStr);
         
         // apply decimal mask
+        if (log) {
+            console.log('Applying decimal mask...');
+        }
+        var formatterDecPartStr = options.decimalMask.apply(decimalPartStr);
+        
+        // build final response
+        // TODO needs more here
+        var result = formatterIntPartStr + options.decimalSeperatorStr + formatterDecPartStr;
+        
+        if (log) {
+            console.log('Result=' + result);
+        }
+        return result;
+    };
+    
+    this.formatNumberOptions = function() {
+        this.groupMaskStr = '#,###';
+        this.decimalSeperatorStr = '.';
+        this.decimalMaskStr = '##';
+        this.negativeMaskStr = '-$1';
+        
+        this.groupMask = null;
+        this.decimalMask = null;
+        this.compiled = false;
+        
+        this.numberMaskValidRegex = new RegExp('[#0]', 'g');
+        this.negativeMaskValidRegex = new RegExp('$1', 'g');
+        
+        this.specifyAll = function(groupMaskStr, decimalMaskStr, decimalSeperatorStr, negativeMaskStr) {
+            // check basic params integrity and handle actually apply the changes
+            if (typeof groupMaskStr !== 'undefined') {
+                if (typeof groupMaskStr !== 'string') {
+                    throw new TypeError('Expecting a string as groupMaskStr param');
+                }
+                this.groupMaskStr = groupMaskStr;
+            }
+            if (typeof decimalMaskStr !== 'undefined') {
+                if (typeof decimalMaskStr !== 'string') {
+                    throw new TypeError('Expecting a string as decimalMaskStr param');
+                }
+                this.decimalMaskStr = decimalMaskStr;
+            }
+            if (typeof decimalSeperatorStr !== 'undefined') {
+                if (typeof decimalSeperatorStr !== 'string') {
+                    throw new TypeError('Expecting a string as decimalSeperatorStr param');
+                }
+                this.decimalSeperatorStr = decimalSeperatorStr;
+            }
+            if (typeof negativeMaskStr !== 'undefined') {
+                if (typeof negativeMaskStr !== 'boolean') {
+                    throw new TypeError('Expecting a string as negativeMaskStr param');
+                }
+                this.negativeMaskStr = negativeMaskStr;
+            }
+            
+            // validate param values
+            var match = groupMaskStr.match(this.numberMaskValidRegex);
+            if (!match || match.length === 0) {
+                throw new Error('groupMaskStr must have at least 1 "0" or "#" char');
+            }
+            
+            match = decimalMaskStr.match(this.numberMaskValidRegex);
+            if (!match || match.length === 0) {
+                throw new Error('decimalMaskStr must have at least 1 "0" or "#" char');
+            }
+            
+            match = negativeMaskStr.match(this.negativeMaskValidRegex);
+            if (!match || match.length === 0) {
+                throw new Error('negativeMaskStr must have at least 1 "$1" string within it');
+            }
+            
+            return this;
+        };
+        
+        this.print = function() {
+            return 'parseNumberSimpleOptions{groupMaskStr:"' + this.groupMaskStr
+                + '",decimalMaskStr:"' + this.decimalMaskStr
+                + '",decimalSeperatorStr:"' + this.decimalSeperatorStr
+                + '",negativeMaskStr:"' + this.negativeMaskStr
+                + '"}';
+        };
+        
+        this.compile = function(groupMask, decimalMask) {
+            if (!this.compiled) {
+                this.groupMask = groupMask;
+                this.groupMask.reversed = true;
+                this.groupMask.repeating = true;
+                this.groupMask.compile();
+                
+                this.decimalMask = decimalMask;
+                this.decimalMask.reversed = false;
+                this.decimalMask.repeating = false;    // TODO allow repeating here
+                this.decimalMask.compile();
+            }
+        };
+    };
+    
+    this.formatMaskCompiled = function(maskStr) {
+        this.maskStr = maskStr;
+        this.repeating = false;
+        this.reversed = false;
+        
+        this.apply = function(pureNumericStr) {
+            // TODO handle repeating
+            console.log('Applying mask:"' + this.maskStr + '",reversed=' + this.reversed);
+            var result = this.reversed ? this._applyReverseMask(maskStr, pureNumericStr) : this._applyMask(maskStr, pureNumericStr);
+            return result;
+        };
+        
+        this.compile = function() {
+            
+        };
+        
+        this._applyMask = function(maskStr, pureNumericStr) {
+            var result = '';
+            // sanity check
+            if (maskStr.length < pureNumericStr.length) {
+                throw new Error('Mask is not long enough, mask:"' + maskStr + '",number="' + pureNumericStr + '"');
+            }
+            
+            // walk through mask and number together
+            for (var i = 0; i < maskStr.length; i++) {
+                var maskCh = maskStr.charAt(i);
+                
+                console.log(i);
+                if (pureNumericStr.length >= 0) {
+                    // still numbers to insert
+                    var digit = pureNumericStr.charAt(i);
+
+                    if (maskCh == '0' || maskCh == '#') {
+                        // write digit as-is
+                        result += digit;
+                    } else {
+                        // write it out as is
+                        result += maskCh;
+                    }
+                } else {
+                    // no more numbers to insert
+                    if (maskCh == '0') {
+                        // zero padding
+                        result += '0';
+                    } else if (maskCh == '#') {
+                        // no more padding or formatting chars, break the mask
+                        break;
+                    } else {
+                        result += maskCh;
+                        
+                        // no more padding or formatting chars, break the mask
+                        break;
+                    }
+                }
+            }
+            return result;
+        };
+        
+        this._applyReverseMask = function(maskStr, pureNumericStr) {
+            var result = '';
+            // sanity check
+            if (maskStr.length < pureNumericStr.length) {
+                throw new Error('Mask is not long enough, mask:"' + maskStr + '",number="' + pureNumericStr + '"');
+            }
+            
+            // walk through mask and number together (backwards)
+            var digitPos = pureNumericStr.length - 1;
+            for (var i = maskStr.length - 1; i >= 0; i--) {
+                var maskCh = maskStr.charAt(i);
+                console.log('Mask ch:' + maskCh);
+                
+                console.log('Digit Pos:' + digitPos);
+                if (digitPos >= 0) {
+                    // still numbers to insert
+                    if (maskCh == '0' || maskCh == '#') {
+                        var digit = pureNumericStr.charAt(digitPos);
+                        console.log('Digit:' + digit);
+                        digitPos--;
+                        
+                        // write digit as-is
+                        result = digit + result;
+                    } else {
+                        // write it out as is
+                        result = maskCh + result;
+                    }
+                } else {
+                    // no more numbers to insert
+                    if (maskCh == '0') {
+                        // zero padding
+                        result = '0' + result;
+                    } else if (maskCh == '#') {
+                        // no more padding or formatting chars, break the mask
+                        break;
+                    } else {
+                        result = maskCh + result;
+                        
+                        // no more padding or formatting chars, break the mask
+                        break;
+                    }
+                }
+            }
+            console.log('Mask result=' + result);
+            return result;
+        };
     };
 }
 

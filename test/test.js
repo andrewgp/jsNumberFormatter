@@ -87,3 +87,23 @@ describe('parseNumberSimple', function() {
         });
     });
 });
+
+
+describe('formatNumber', function() {
+    describe('Positive Tests', function() {
+        describe('Test1', function() {
+            it('Format to 1.23', function() {
+                var options = new nf.formatNumberOptions();
+                var numberStr = nf.formatNumber(1.23, options, true);
+                assert.equal(numberStr, '1.23');
+            });
+        });
+        describe('Test2', function() {
+            it('Format to 1,234.56', function() {
+                var options = new nf.formatNumberOptions();
+                var numberStr = nf.formatNumber(1234.56, options, true);
+                assert.equal(numberStr, '1,234.56');
+            });
+        });
+    });
+});
