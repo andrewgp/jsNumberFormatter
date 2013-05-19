@@ -223,9 +223,19 @@ function NumberFormatter() {
         if (log) {
             console.log('Splitting number to parts...');
         }
+        
+        var integerPartStr;
+        var decimalPartStr;
         var match = this.consts.numberRegex.exec(number);
-        var integerPartStr = match[1];
-        var decimalPartStr = match[2];
+        if (match) {
+            // has 2 parts
+            integerPartStr = match[1];
+            decimalPartStr = match[2];
+        } else {
+            // likely only 1 part, or something is wrong!
+            integerPartStr = number;
+            decimalPartStr = '';
+        }
         if (log) {
             console.log('Parts=integer:' + integerPartStr + ',decimal:' + decimalPartStr);
         }
@@ -347,16 +357,19 @@ function NumberFormatter() {
                 throw new Error('Mask not compiled');
             }
             
-            // TODO handle repeating
-            console.log('Applying mask:"' + this.maskStr + '",reversed=' + this.reversed);
+            pureNumericStr = '' + pureNumericStr;
+            
+            console.log('Applying mask:"' + this.maskStr + '",reversed=' + this.reversed + ',input="' + pureNumericStr + '"');
             var result = '';
             if (this.repeating) {
                 if (this.reversed) {
-                    for (var pos = pureNumericStr.length; pos >= 0; pos -= this.maskDigitSize) {    // FIXME going to truncate?
+                    var strLen = pureNumericStr.length;
+                    console.log('length=' + strLen);
+                    for (var pos = strLen; pos >= 0; pos -= this.maskDigitSize) {    // FIXME going to truncate?
                         // break into the digits to format
                         console.log('Pos:' + pos);
                         var bottomBound = pos - this.maskDigitSize < 0 ? 0 : pos - this.maskDigitSize;
-                        var subDigits = pureNumericStr.substring(bottomBound, pos);
+                        var subDigits = strLen === 1 ? ('' + pureNumericStr).substring(bottomBound, pos) : pureNumericStr.substring(bottomBound, pos);
                         
                         var newStr = this._applyReverseMask(maskStr, subDigits, bottomBound > 0);
                         if (newStr == '') {
@@ -391,15 +404,15 @@ function NumberFormatter() {
             }
             
             // walk through mask and number together
+            var strLen = typeof pureNumericStr.length === 'undefined' ? 1 : pureNumericStr.length;
             for (var i = 0; i < maskStr.length; i++) {
                 var maskCh = maskStr.charAt(i);
                 
-                console.log(i);
-                if (pureNumericStr.length >= 0) {
+                if (i < strLen) {
                     // still numbers to insert
                     var digit = pureNumericStr.charAt(i);
 
-                    if (maskCh == '0' || maskCh == '#') {
+                    if (maskCh === '0' || maskCh == '#') {
                         // write digit as-is
                         result += digit;
                     } else {
@@ -408,8 +421,10 @@ function NumberFormatter() {
                     }
                 } else {
                     // no more numbers to insert
-                    if (maskCh == '0') {
+                    console.log('Mask ch:' + maskCh);
+                    if (maskCh === '0') {
                         // zero padding
+                        console.log('Zero pad');
                         result += '0';
                     } else if (maskCh == '#') {
                         // no more padding or formatting chars, break the mask
@@ -422,11 +437,12 @@ function NumberFormatter() {
                     }
                 }
             }
+            console.log('Mask result=' + result);
             return result;
         };
         
         this._applyReverseMask = function(maskStr, pureNumericStr, areMore) {
-            console.log('Applying reverse mask:"' + maskStr + '",str:"' + pureNumericStr + '"');
+            console.log('Applying reverse mask:"' + maskStr + '"areMore:' + areMore + ',str:"' + pureNumericStr + '"');
             var result = '';
             // sanity check
             if (maskStr.length < pureNumericStr.length) {
@@ -443,7 +459,7 @@ function NumberFormatter() {
                 if (digitPos >= 0) {
                     console.log('Digit Pos:' + digitPos);
                     // still numbers to insert
-                    if (maskCh == '0' || maskCh == '#') {
+                    if (maskCh === '0' || maskCh == '#') {
                         var digit = pureNumericStr.charAt(digitPos);
                         console.log('Digit:' + digit);
                         digitPos--;
@@ -464,7 +480,7 @@ function NumberFormatter() {
                     }
                 } else {
                     // no more numbers to insert
-                    if (maskCh == '0') {
+                    if (maskCh === '0') {
                         // write out any held chars
                         if (null != holdChars) {
                             console.log('Writing hold chars:' + holdChars);
@@ -480,9 +496,6 @@ function NumberFormatter() {
                     } else {
                         holdChars = holdChars != null ? maskCh + holdChars : maskCh;
                         console.log('Held char:' + maskCh);
-                        
-                        // no more padding or formatting chars, break the mask
-                        break;
                     }
                 }
             }

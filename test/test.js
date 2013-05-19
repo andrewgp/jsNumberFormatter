@@ -116,5 +116,23 @@ describe('formatNumber', function() {
             });
         });
         
+        describe('Test4', function() {
+            it('Format to 1.00', function() {
+                var options = new nf.formatNumberOptions();
+                options.decimalMaskStr = '00';
+                var numberStr = nf.formatNumber(1, options, true);
+                assert.equal(numberStr, '1.00');
+            });
+        });
+        
+        describe('Test5', function() {
+            it('Format to 0,123.00', function() {
+                var options = new nf.formatNumberOptions();
+                options.decimalMaskStr = '00';
+                options.groupMaskStr = '0,000';
+                var numberStr = nf.formatNumber(123, options, true);
+                assert.equal(numberStr, '0,123.00');
+            });
+        });
     });
 });
