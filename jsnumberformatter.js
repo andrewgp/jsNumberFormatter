@@ -4,9 +4,18 @@
  */
 function NumberFormatter() {
     
-    // constants
-    this.consts = {};
-    this.consts.regexStrNonNumeric = '[^0-9\\-\\.]';
+    
+    /*  CONSTANTS   */
+    
+    
+    this.consts = {
+        regexStrNonNumeric: '[^0-9\\.]',
+        negativeParanRegex: '^\\(([^\\)]+)\\)$'
+    };
+    
+    
+    /*  PARSING */
+    
     
     /**
      * Parses a number very simply and quickly.
@@ -55,6 +64,19 @@ function NumberFormatter() {
             newNumberString = newNumberString.replace(new RegExp(options.decimalStr, 'g'), '.');
         }
         
+        // remove the negative signage
+        if (options.negativeMatch) {
+            if (log) {
+                console.log('[' + numberString + '] Removing any negative signs...');
+            }
+            var match = options.negativeMatch.exec(newNumberString);
+            var isNegative = false;
+            if (match) {
+                newNumberString = match[1];
+                isNegative = true;
+            }
+        }
+        
         if (options.strict) {
             // check that there is 0 or 1 occurrances of the decimal point
             if (log) {
@@ -85,11 +107,21 @@ function NumberFormatter() {
             newNumberString = newNumberString.replace(new RegExp(this.consts.regexStrNonNumeric, 'g'), '');
         }
         
+        // add the negative sign on if required
+        if (isNegative) {
+            newNumberString = '-' + newNumberString;
+        }
+        
         // finally try to parse/force to a javascript number
         if (log) {
             console.log('Output: ' + newNumberString);
         }
-        return new Number(newNumberString);
+        var result = new Number(newNumberString);
+        if (isNaN(result)) {
+            throw new NaNError();
+        }
+        
+        return result;
     };
     
     this.parseNumberSimpleOptions = function() {
@@ -98,8 +130,9 @@ function NumberFormatter() {
         this.strict = false;
         this.trim = true;
         this.removeBadCh = false;
+        this.negativeMatch = null;//new RegExp('^-(.+)');
         
-        this.specifyAll = function(decimalStr, groupStr, strict, trim, removeBadCh) {
+        this.specifyAll = function(decimalStr, groupStr, strict, trim, removeBadCh, negativeMatch) {
             // check params
             if (typeof decimalStr !== 'undefined') {
                 if (typeof decimalStr !== 'string') {
@@ -125,12 +158,17 @@ function NumberFormatter() {
                 }
                 this.trim = trim;
             }
-            
             if (typeof removeBadCh !== 'undefined') {
                 if (typeof removeBadCh !== 'boolean') {
                     throw new TypeError('Expecting a boolean as removeBadCh param');
                 }
                 this.removeBadCh = removeBadCh;
+            }
+            if (typeof negativeMatch !== 'undefined') {
+                if (typeof negativeMatch !== 'string') {
+                    throw new TypeError('Expecting a string as negativeMatch param');
+                }
+                this.negativeMatch = new RegExp(negativeMatch);
             }
             return this;
         };
@@ -141,10 +179,55 @@ function NumberFormatter() {
                 + '",strict:"' + this.strict
                 + '",trim:"' + this.trim
                 + '",removeBadCh:"' + this.removeBadCh
+                + '",negativeMatch:"' + this.negativeMatch
                 + '"}';
         };
 	};
+    
+    
+    /*  FORMATTING  */
+    
+    
+    /**
+     * Formats a number (object) into a string, based on the options.
+     */
+    this.formatNumber = function(number, options, log) {
+        // TODO
+        // Check Params
+        
+        // Compile masks
+        
+        // run formatting on compiled masks
+        return this.formatNumberPreCompiled(number, options, log);
+    };
+    
+    /**
+     * Formats a number (object) into a string, based on the options.
+     * This is for optimisation, to have the format mask pre-compiled for
+     * re-use.
+     */
+    this.formatNumberPreCompiled = function(number, options, log) {
+        // TODO
+        
+        // apply group mask
+        
+        // apply decimal mask
+    };
 }
+
+
+/*  EXCEPTIONS  */
+
+
+function NaNError(message) {
+    this.name = "NaNError";
+    this.message = ("NaN " || message);
+}
+NaNError.prototype = Error.prototype;
+
+
+/*  MISC    */
+
 
 // export for RequireJS support (mainly to allow mocha to work)
 module.exports.nf = new NumberFormatter();

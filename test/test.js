@@ -28,6 +28,22 @@ describe('parseNumberSimple', function() {
                 assert.equal(number, 1);
             });
         });
+        
+        describe('Test4-FullParse', function() {
+            it('Parse to 1', function() {
+                var options = new nf.parseNumberSimpleOptions();
+                var number = nf.parseNumberSimple('-1,000,123.45', options, true);
+                assert.equal(number, -1000123.45);
+            });
+        });
+        
+        describe('Test5-ParseNegative', function() {
+            it('Parse to 1', function() {
+                var options = new nf.parseNumberSimpleOptions().specifyAll('.', ',', false, false, false, '^\\(([^\\)]+)\\)$');
+                var number = nf.parseNumberSimple('(1,000,123.45)', options, true);
+                assert.equal(number, -1000123.45);
+            });
+        });
     });
     
     describe('Negative Tests', function() {
@@ -41,6 +57,32 @@ describe('parseNumberSimple', function() {
                     assert.equal(err.name, 'Error');
                     assert.equal(err.message, 'Input has more than 1 decimal point: 2');
                 }
+            });
+        });
+        
+        describe('Test2-ParseNegative', function() {
+            it('Parse to 1', function() {
+                var options = new nf.parseNumberSimpleOptions().specifyAll('.', ',', false, false, false);
+                var number;
+                try {
+                    number = nf.parseNumberSimple('(1,000,123.45)', options, true);
+                    assert.fail();
+                } catch(err) {
+                    assert.equal(err.name, 'NaNError');
+                }
+                
+                // now try with more strict options
+                options = new nf.parseNumberSimpleOptions().specifyAll('.', ',', true, true, false);
+                try {
+                    number = nf.parseNumberSimple('(1,000,123.45)', options, true);
+                    assert.fail();
+                } catch(err) {
+                    assert.equal(err.name, 'Error');
+                }
+                
+                options = new nf.parseNumberSimpleOptions().specifyAll('.', ',', true, true, true);
+                number = nf.parseNumberSimple('(1,000,123.45)', options, true);
+                assert.equal(number, 1000123.45);
             });
         });
     });
