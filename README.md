@@ -9,3 +9,5 @@ Purely at prototype stage right now.
 
 Features: see the jQuery plugin, I will be adding many more also.
 Dev Env: Cloud9 - http://c9.io/ap0/jsnumberformatter
+Cloud9 Setup:
+npm install -g mocha
