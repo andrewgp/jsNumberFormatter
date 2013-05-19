@@ -91,6 +91,7 @@ describe('parseNumberSimple', function() {
 
 describe('formatNumber', function() {
     describe('Positive Tests', function() {
+        
         describe('Test1', function() {
             it('Format to 1.23', function() {
                 var options = new nf.formatNumberOptions();
@@ -98,6 +99,7 @@ describe('formatNumber', function() {
                 assert.equal(numberStr, '1.23');
             });
         });
+        
         describe('Test2', function() {
             it('Format to 1,234.56', function() {
                 var options = new nf.formatNumberOptions();
@@ -105,5 +107,14 @@ describe('formatNumber', function() {
                 assert.equal(numberStr, '1,234.56');
             });
         });
+        
+        describe('Test3', function() {
+            it('Format to 1,234,567.89', function() {
+                var options = new nf.formatNumberOptions();
+                var numberStr = nf.formatNumber(1234567.89, options, true);
+                assert.equal(numberStr, '1,234,567.89');
+            });
+        });
+        
     });
 });

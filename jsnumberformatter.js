@@ -11,7 +11,9 @@ function NumberFormatter() {
     this.consts = {
         regexStrNonNumeric: '[^0-9\\.]',
         negativeParanRegex: '^\\(([^\\)]+)\\)$',
-        numberRegex: new RegExp('^([0-9]*)\\.([0-9]*)$')
+        numberRegex: new RegExp('^([0-9]*)\\.([0-9]*)$'),
+        maskCharsStr: '[0#]',
+        maskCharsRegex: new RegExp('[0#]', 'g')
     };
     
     
@@ -251,7 +253,7 @@ function NumberFormatter() {
     };
     
     this.formatNumberOptions = function() {
-        this.groupMaskStr = '#,###';
+        this.groupMaskStr = ',###';
         this.decimalSeperatorStr = '.';
         this.decimalMaskStr = '##';
         this.negativeMaskStr = '-$1';
@@ -337,15 +339,48 @@ function NumberFormatter() {
         this.repeating = false;
         this.reversed = false;
         
+        this.compiled = false;
+        this.maskDigitSize = -1;
+        
         this.apply = function(pureNumericStr) {
+            if (!this.compiled) {
+                throw new Error('Mask not compiled');
+            }
+            
             // TODO handle repeating
             console.log('Applying mask:"' + this.maskStr + '",reversed=' + this.reversed);
-            var result = this.reversed ? this._applyReverseMask(maskStr, pureNumericStr) : this._applyMask(maskStr, pureNumericStr);
+            var result = '';
+            if (this.repeating) {
+                if (this.reversed) {
+                    for (var pos = pureNumericStr.length; pos >= 0; pos -= this.maskDigitSize) {    // FIXME going to truncate?
+                        // break into the digits to format
+                        console.log('Pos:' + pos);
+                        var bottomBound = pos - this.maskDigitSize < 0 ? 0 : pos - this.maskDigitSize;
+                        var subDigits = pureNumericStr.substring(bottomBound, pos);
+                        
+                        var newStr = this._applyReverseMask(maskStr, subDigits, bottomBound > 0);
+                        if (newStr == '') {
+                            break;
+                        }
+                        result = newStr + result;
+                    }
+                } else {
+                    // TODO
+                }
+                
+                return result;
+            } else {
+                result = this.reversed ? this._applyReverseMask(maskStr, pureNumericStr, false) : this._applyMask(maskStr, pureNumericStr);
+            }
             return result;
         };
         
         this.compile = function() {
+            var match = this.maskStr.match(new RegExp('[0#]', 'g'));
+            this.maskDigitSize = match.length;
+            console.log('Compiled at length:' + this.maskDigitSize);
             
+            this.compiled = true;
         };
         
         this._applyMask = function(maskStr, pureNumericStr) {
@@ -390,7 +425,8 @@ function NumberFormatter() {
             return result;
         };
         
-        this._applyReverseMask = function(maskStr, pureNumericStr) {
+        this._applyReverseMask = function(maskStr, pureNumericStr, areMore) {
+            console.log('Applying reverse mask:"' + maskStr + '",str:"' + pureNumericStr + '"');
             var result = '';
             // sanity check
             if (maskStr.length < pureNumericStr.length) {
@@ -399,39 +435,59 @@ function NumberFormatter() {
             
             // walk through mask and number together (backwards)
             var digitPos = pureNumericStr.length - 1;
+            var holdChars = null;
             for (var i = maskStr.length - 1; i >= 0; i--) {
                 var maskCh = maskStr.charAt(i);
                 console.log('Mask ch:' + maskCh);
                 
-                console.log('Digit Pos:' + digitPos);
                 if (digitPos >= 0) {
+                    console.log('Digit Pos:' + digitPos);
                     // still numbers to insert
                     if (maskCh == '0' || maskCh == '#') {
                         var digit = pureNumericStr.charAt(digitPos);
                         console.log('Digit:' + digit);
                         digitPos--;
                         
+                        // write out any held chars
+                        if (holdChars != null) {
+                            console.log('Writing hold chars:' + holdChars);
+                            result = holdChars + result;
+                            holdChars = null;
+                        }
+                        
                         // write digit as-is
                         result = digit + result;
                     } else {
-                        // write it out as is
-                        result = maskCh + result;
+                        // hold the char
+                        holdChars = holdChars != null ? maskCh + holdChars : maskCh;
+                        console.log('Held char:' + maskCh);
                     }
                 } else {
                     // no more numbers to insert
                     if (maskCh == '0') {
+                        // write out any held chars
+                        if (null != holdChars) {
+                            console.log('Writing hold chars:' + holdChars);
+                            result = holdChars + result;
+                            holdChars = null;
+                        }
+                        
                         // zero padding
                         result = '0' + result;
                     } else if (maskCh == '#') {
                         // no more padding or formatting chars, break the mask
                         break;
                     } else {
-                        result = maskCh + result;
+                        holdChars = holdChars != null ? maskCh + holdChars : maskCh;
+                        console.log('Held char:' + maskCh);
                         
                         // no more padding or formatting chars, break the mask
                         break;
                     }
                 }
+            }
+            if (areMore && holdChars != null) {
+                result = holdChars + result;
             }
             console.log('Mask result=' + result);
             return result;
