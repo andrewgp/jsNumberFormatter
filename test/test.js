@@ -30,7 +30,7 @@ describe('parseNumberSimple', function() {
         });
         
         describe('Test4-FullParse', function() {
-            it('Parse to 1', function() {
+            it('Parse to -1000123.45', function() {
                 var options = new nf.parseNumberSimpleOptions();
                 var number = nf.parseNumberSimple('-1,000,123.45', options, true);
                 assert.equal(number, -1000123.45);
@@ -38,10 +38,37 @@ describe('parseNumberSimple', function() {
         });
         
         describe('Test5-ParseNegative', function() {
-            it('Parse to 1', function() {
+            it('Parse to -1000123.45', function() {
                 var options = new nf.parseNumberSimpleOptions().specifyAll('.', ',', false, false, false, '^\\(([^\\)]+)\\)$');
                 var number = nf.parseNumberSimple('(1,000,123.45)', options, true);
                 assert.equal(number, -1000123.45);
+            });
+        });
+        
+        describe('Test6-ParseNegativeBadChars', function() {
+            it('Parse to -1000123.45', function() {
+                var options = new nf.parseNumberSimpleOptions().specifyAll('.', ',', false, false, true, '^.*-(.+)');
+                var number = nf.parseNumberSimple('$-1,000,123.45', options, true);
+                assert.equal(number, -1000123.45);
+            });
+        });
+        
+        describe('Test7-Percentages', function() {
+            it('Parse to 1.2345', function() {
+                var options = new nf.parseNumberSimpleOptions()
+                    .specifyAll('.', ',', false, false, true)
+                    .specifyPerc(true);
+                var number = nf.parseNumberSimple('123.45%', options, true);
+                assert.equal(number, 1.2345);
+                
+                number = nf.parseNumberSimple('-1.45%', options, true);
+                assert.equal(number, -0.0145);
+                
+                number = nf.parseNumberSimple('-.12%', options, true);
+                assert.equal(number, -0.0012);
+                
+                number = nf.parseNumberSimple('-1%', options, true);
+                assert.equal(number, -0.01);
             });
         });
     });

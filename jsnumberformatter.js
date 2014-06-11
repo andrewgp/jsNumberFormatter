@@ -1,6 +1,12 @@
 /**
  * Prototype for jsNumberFormatter.
  * 
+ * Status:
+ * Simple Parsing [x]
+ *      - Probably worth adding a few more options?
+ * Complex Parsing [-]
+ * Formatting [x]
+ *      - Needs some tuning of the repeating groups
  */
 function NumberFormatter() {
     
@@ -8,6 +14,7 @@ function NumberFormatter() {
     /*  CONSTANTS   */
     
     
+    // all constants
     this.consts = {
         regexStrNonNumeric: '[^0-9\\.]',
         negativeParanRegex: '^\\(([^\\)]+)\\)$',
@@ -48,42 +55,45 @@ function NumberFormatter() {
         // trim the whitespace ends off the string
         if (options.trim) {
             if (log) {
-                console.log('[' + numberString + '] Trimming...');
+                console.log('[' + newNumberString + '] Trimming...');
             }
             newNumberString = newNumberString.replace(new RegExp('^\\s+|\\s+$', 'g'), '');
         }
         
         // strip out the group occurrances
         if (log) {
-            console.log('[' + numberString + '] Removing groups...');
+            console.log('[' + newNumberString + '] Removing groups...');
         }
         newNumberString = newNumberString.replace(new RegExp(options.groupStr, 'g'), '');
         
         // replace the decimal separator (if needed)
         if (options.decimalStr != '.') {
             if (log) {
-                console.log('[' + numberString + '] Replacing decimal point(s)...');
+                console.log('[' + newNumberString + '] Replacing decimal point(s)...');
             }
             newNumberString = newNumberString.replace(new RegExp(options.decimalStr, 'g'), '.');
         }
         
         // remove the negative signage
+        var isNegative = false;
         if (options.negativeMatch) {
             if (log) {
-                console.log('[' + numberString + '] Removing any negative signs...');
+                console.log('[' + newNumberString + '] Removing any negative signs...');
             }
             var match = options.negativeMatch.exec(newNumberString);
-            var isNegative = false;
             if (match) {
                 newNumberString = match[1];
                 isNegative = true;
+                if (log) {
+                    console.log('[' + newNumberString + '] Removed negative sign and any fixes');
+                }
             }
         }
         
         if (options.strict) {
             // check that there is 0 or 1 occurrances of the decimal point
             if (log) {
-                console.log('[' + numberString + '] Counting decimal points...');
+                console.log('[' + newNumberString + '] Counting decimal points...');
             }
             var count = newNumberString.match(new RegExp('\\.', 'g')).length;
             if (count > 1) {
@@ -93,11 +103,24 @@ function NumberFormatter() {
             if (!options.removeBadCh) {
                 // flag any non numerics
                 if (log) {
-                    console.log('[' + numberString + '] Counting disallowed chars...');
+                    console.log('[' + newNumberString + '] Counting disallowed chars...');
                 }
                 count = newNumberString.match(new RegExp(this.consts.regexStrNonNumeric, 'g')).length;
                 if (count > 0) {
-                    throw new Error('Input has ' + count + ' disallowed chars: ' + numberString);
+                    throw new Error('Input has ' + count + ' disallowed chars: ' + newNumberString);
+                }
+            }
+        }
+        
+        // detect percentages
+        var isPerc = false;
+        if (options.percEnabled) {
+            var match = options.percMatch.exec(newNumberString);
+            if (match) {
+                newNumberString = match[1];
+                isPerc = true;
+                if (log) {
+                    console.log('[' + newNumberString + '] is percentage');
                 }
             }
         }
@@ -105,14 +128,38 @@ function NumberFormatter() {
         // remove any non-numeric chars
         if (options.removeBadCh) {
             if (log) {
-                console.log('[' + numberString + '] Removing bad chars...');
+                console.log('[' + newNumberString + '] Removing bad chars...');
             }
             newNumberString = newNumberString.replace(new RegExp(this.consts.regexStrNonNumeric, 'g'), '');
+            if (log) {
+                console.log('[' + newNumberString + '] Removed bad chars...');
+            }
         }
         
         // add the negative sign on if required
         if (isNegative) {
             newNumberString = '-' + newNumberString;
+        }
+        
+        if (isPerc) {
+            // work out existing dps
+            var dpCount = newNumberString.indexOf(options.decimalStr);
+            if (dpCount >= 0) {
+                dpCount = newNumberString.length - (dpCount + 1) + 2;
+            } else {
+                dpCount = 2;
+            }
+            
+            // divide by 100
+            var preResult = new Number(newNumberString);
+            newNumberString = preResult /= 100;
+            
+            // force some rounding to the dp we expected
+            newNumberString = this.round(newNumberString, dpCount, log);
+            
+            if (log) {
+                console.log('[' + newNumberString + '] Converted to percentage...');
+            }
         }
         
         // finally try to parse/force to a javascript number
@@ -133,8 +180,17 @@ function NumberFormatter() {
         this.strict = false;
         this.trim = true;
         this.removeBadCh = false;
-        this.negativeMatch = null;//new RegExp('^-(.+)');
         
+        // negative numbers support
+        this.negativeMatch = new RegExp('^-(.+)');
+        
+        // percentage support
+        this.percEnabled = false;
+        this.percMatch = new RegExp('^(.+)%');
+        
+        /**
+         * Specifies all the main options.
+         */
         this.specifyAll = function(decimalStr, groupStr, strict, trim, removeBadCh, negativeMatch) {
             // check params
             if (typeof decimalStr !== 'undefined') {
@@ -172,6 +228,20 @@ function NumberFormatter() {
                     throw new TypeError('Expecting a string as negativeMatch param');
                 }
                 this.negativeMatch = new RegExp(negativeMatch);
+            }
+            return this;
+        };
+        
+        /**
+         * Toggles and specifies percentage detection.
+         */
+        this.specifyPerc = function(enabled, match) {
+            this.percEnabled = enabled;
+            if (typeof match !== 'undefined') {
+                if (typeof match !== 'string') {
+                    throw new TypeError('Expecting a string as match param');
+                }
+                this.percMatch = new RegExp(match);
             }
             return this;
         };
@@ -372,7 +442,7 @@ function NumberFormatter() {
                         var subDigits = strLen === 1 ? ('' + pureNumericStr).substring(bottomBound, pos) : pureNumericStr.substring(bottomBound, pos);
                         
                         var newStr = this._applyReverseMask(maskStr, subDigits, bottomBound > 0);
-                        if (newStr == '') {
+                        if (newStr === '') {
                             break;
                         }
                         result = newStr + result;
@@ -465,7 +535,7 @@ function NumberFormatter() {
                         digitPos--;
                         
                         // write out any held chars
-                        if (holdChars != null) {
+                        if (holdChars !== null) {
                             console.log('Writing hold chars:' + holdChars);
                             result = holdChars + result;
                             holdChars = null;
@@ -475,14 +545,14 @@ function NumberFormatter() {
                         result = digit + result;
                     } else {
                         // hold the char
-                        holdChars = holdChars != null ? maskCh + holdChars : maskCh;
+                        holdChars = holdChars !== null ? maskCh + holdChars : maskCh;
                         console.log('Held char:' + maskCh);
                     }
                 } else {
                     // no more numbers to insert
                     if (maskCh === '0') {
                         // write out any held chars
-                        if (null != holdChars) {
+                        if (null !== holdChars) {
                             console.log('Writing hold chars:' + holdChars);
                             result = holdChars + result;
                             holdChars = null;
@@ -494,17 +564,25 @@ function NumberFormatter() {
                         // no more padding or formatting chars, break the mask
                         break;
                     } else {
-                        holdChars = holdChars != null ? maskCh + holdChars : maskCh;
+                        holdChars = holdChars !== null ? maskCh + holdChars : maskCh;
                         console.log('Held char:' + maskCh);
                     }
                 }
             }
-            if (areMore && holdChars != null) {
+            if (areMore && holdChars !== null) {
                 result = holdChars + result;
             }
             console.log('Mask result=' + result);
             return result;
         };
+    };
+    
+    this.round = function(value, decimals, log) {
+        var result = Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+        if (log) {
+            console.log('[' + value + '] Rounded to ' + result);
+        }
+        return result;
     };
 }
 
