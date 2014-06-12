@@ -8,18 +8,13 @@
  * SOURCE: https://github.com/andrewgp/jsNumberFormatter
  * 
  * VERSION: 0.1
- * STATE: Prototype
+ * STATE: Alpha
  * DEPENDANCIES: -
  * 
  * STATUS:
  * 
- * Simple Parsing [x]
- *      - Probably worth adding a few more options? [x]
- * Complex Parsing
- * Formatting [x]
- *      - Needs some tuning of the repeating groups
- * Modular Impl. [x]
- * Localisation [x]
+ * + Formatting
+ *   - Needs some tuning of the repeating groups
  * 
  * CHANGELOG:
  * 
@@ -188,24 +183,45 @@ var JsNumberFormatter = {
                 }
                 this.groupStr = groupStr;
             }
+            this.specifyStrict(strict);
+            this.specifyTrim(trim);
+            this.specifyRemoveBadCh(removeBadCh);
+            this.specifyNegativeMatch(negativeMatch);
+            
+            return this;
+        };
+        
+        this.specifyStrict = function(strict) {
             if (typeof strict !== 'undefined') {
                 if (typeof strict !== 'boolean') {
                     throw new TypeError('Expecting a boolean as strict param');
                 }
                 this.strict = strict;
             }
+            return this;
+        };
+        
+        this.specifyTrim = function(trim) {
             if (typeof trim !== 'undefined') {
                 if (typeof trim !== 'boolean') {
                     throw new TypeError('Expecting a boolean as trim param');
                 }
                 this.trim = trim;
             }
+            return this;
+        };
+        
+        this.specifyRemoveBadCh = function(removeBadCh) {
             if (typeof removeBadCh !== 'undefined') {
                 if (typeof removeBadCh !== 'boolean') {
                     throw new TypeError('Expecting a boolean as removeBadCh param');
                 }
                 this.removeBadCh = removeBadCh;
             }
+            return this;
+        };
+        
+        this.specifyNegativeMatch = function(negativeMatch) {
             if (typeof negativeMatch !== 'undefined') {
                 if (typeof negativeMatch !== 'string') {
                     throw new TypeError('Expecting a string as negativeMatch param');
@@ -329,7 +345,12 @@ var JsNumberFormatter = {
         
         // build final response
         // TODO needs more here
-        var result = formatterIntPartStr + options.decimalSeperatorStr + formatterDecPartStr;
+        var result;
+        if (formatterDecPartStr.length > 0) {
+            result = formatterIntPartStr + options.decimalSeperatorStr + formatterDecPartStr;
+        } else {
+            result = formatterIntPartStr;
+        }
         
         if (log) {
             console.log('Result=' + result);
@@ -341,14 +362,13 @@ var JsNumberFormatter = {
         this.groupMaskStr = ',###';
         this.decimalSeperatorStr = '.';
         this.decimalMaskStr = '##';
-        this.negativeMaskStr = '-$1';
+        this.negativeMaskStr = '-(.+)';
         
         this.groupMask = null;
         this.decimalMask = null;
         this.compiled = false;
         
         this.numberMaskValidRegex = new RegExp('[#0]', 'g');
-        this.negativeMaskValidRegex = new RegExp('$1', 'g');
         
         this.specifyAll = function(groupMaskStr, decimalMaskStr, decimalSeperatorStr, negativeMaskStr) {
             // check basic params integrity and handle actually apply the changes
@@ -371,7 +391,7 @@ var JsNumberFormatter = {
                 this.decimalSeperatorStr = decimalSeperatorStr;
             }
             if (typeof negativeMaskStr !== 'undefined') {
-                if (typeof negativeMaskStr !== 'boolean') {
+                if (typeof negativeMaskStr !== 'string') {
                     throw new TypeError('Expecting a string as negativeMaskStr param');
                 }
                 this.negativeMaskStr = negativeMaskStr;
@@ -388,11 +408,15 @@ var JsNumberFormatter = {
                 throw new Error('decimalMaskStr must have at least 1 "0" or "#" char');
             }
             
-            match = negativeMaskStr.match(this.negativeMaskValidRegex);
+            return this;
+        };
+        
+        this.specifyDecimalMask = function(decimalMaskStr) {
+            var match = decimalMaskStr.match(this.numberMaskValidRegex);
             if (!match || match.length === 0) {
-                throw new Error('negativeMaskStr must have at least 1 "$1" string within it');
+                throw new Error('decimalMaskStr must have at least 1 "0" or "#" char');
             }
-            
+            this.decimalMaskStr = decimalMaskStr;
             return this;
         };
         
@@ -665,7 +689,11 @@ var JsNumberFormatter = {
         FormattedNumber: function() {
             this.parse = function(origValue, currentValue, context) {
                 // strip out the group occurrances
-                currentValue = currentValue.replace(new RegExp(context.options.groupStr, 'g'), '');
+                var groupSep = context.options.groupStr;
+                console.log(groupSep);
+                groupSep = groupSep.replace(new RegExp('\\.', 'g'), '\\.');
+                console.log(groupSep);
+                currentValue = currentValue.replace(new RegExp(groupSep, 'g'), '');
                 if (context.log) {
                     console.log('[' + currentValue + '] Removed groups...');
                 }

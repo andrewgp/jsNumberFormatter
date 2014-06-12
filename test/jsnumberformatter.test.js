@@ -122,8 +122,8 @@ describe('formatNumber', function() {
         describe('Test1', function() {
             it('Format to 1.23', function() {
                 var options = new nf.formatNumberOptions();
-                var numberStr = nf.formatNumber(1.23, options, true);
-                assert.equal(numberStr, '1.23');
+                var numberStr = nf.formatNumber(1, options, true);
+                assert.equal(numberStr, '1');
             });
         });
         

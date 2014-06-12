@@ -54,7 +54,23 @@ JsNumberFormatter.locales = {
     
     localesMap: new JsNumberFormatter.util.HashMap(),
     
-    parseOptions: function(locale, nf, isFullLocale) {
+    parseOptions: function(locale, isFullLocale) {
+        var codes = JsNumberFormatter.locales._getCodes(locale, isFullLocale);
+        var dec = codes[0];
+        var group = codes[1];
+        var neg = codes[2];
+        return new JsNumberFormatter.parseNumberSimpleOptions().specifyAll(dec, group, false, true, false, '^' + neg + '(.+)');
+    },
+    
+    formatOptions: function(locale, isFullLocale) {
+        var codes = JsNumberFormatter.locales._getCodes(locale, isFullLocale);
+        var dec = codes[0];
+        var group = codes[1];
+        var neg = codes[2];
+        return new JsNumberFormatter.formatNumberOptions().specifyAll(group + '###', '##', dec, neg);
+    },
+    
+    _getCodes: function(locale, isFullLocale) {
         // handle optional params
         if (typeof isFullLocale === 'undefined') {
             isFullLocale = false;
@@ -96,10 +112,7 @@ JsNumberFormatter.locales = {
         if (codes === null || typeof codes === 'undefined') {
             throw new TypeError('Locale "' + locale + '" not supported');
         }
-        var dec = codes[0];
-        var group = codes[1];
-        var neg = codes[2];
-        return new JsNumberFormatter.parseNumberSimpleOptions().specifyAll(dec, group, false, true, false, '^' + neg + '(.+)');
+        return codes;
     }
 };
 
