@@ -1,28 +1,65 @@
 /**
- * Prototype for jsNumberFormatter.
+ * LIBRARY: jsNumberFormatter
+ * COMPONENT: -
+ * DESCRIPTION: A pure JS implementation of number parsing and formatting.
+ * FILENAME: jsNumberFormatter.js
+ * DATE: 2014-06-11
+ * AUTHOR: Andrew G Parry
+ * SOURCE: https://github.com/andrewgp/jsNumberFormatter
  * 
- * Status:
+ * VERSION: 0.1
+ * STATE: Prototype
+ * DEPENDANCIES: -
+ * 
+ * STATUS:
+ * 
  * Simple Parsing [x]
  *      - Probably worth adding a few more options? [x]
- * Complex Parsing [-]
+ * Complex Parsing
  * Formatting [x]
  *      - Needs some tuning of the repeating groups
  * Modular Impl. [x]
+ * Localisation [x]
+ * 
+ * CHANGELOG:
+ * 
+ * LICENSE:
+ * 
+ * The MIT License (MIT)
+ * Copyright (c) 2014 Andrew G Parry
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
-function NumberFormatter() {
+
+var JsNumberFormatter = {
     
     
     /*  CONSTANTS   */
     
     
     // all constants
-    this.consts = {
+    consts: {
         regexStrNonNumeric: '[^0-9\\.]',
         negativeParanRegex: '^\\(([^\\)]+)\\)$',
         numberRegex: new RegExp('^([0-9]*)\\.([0-9]*)$'),
         maskCharsStr: '[0#]',
         maskCharsRegex: new RegExp('[0#]', 'g')
-    };
+    },
     
     
     /*  PARSING */
@@ -31,7 +68,7 @@ function NumberFormatter() {
     /**
      * Parses a number very simply and quickly.
      */
-    this.parseNumberSimple = function(numberString, options, log, extraModules) {
+    parseNumberSimple: function(numberString, options, log, extraModules) {
         // handle log param
         log = typeof log !== 'undefined' ? log : false;
         
@@ -92,19 +129,19 @@ function NumberFormatter() {
         }
         
         return result;
-    };
+    },
     
     // holder of the operators (functions in this case) that can be used to process a string parse
-    this.parseOperators = function() {
+    parseOperators: function() {
         this.operators = [ ];
         
         this.add = function(op) {
             this.operators[this.operators.length] = op; 
         };
-    };
+    },
     
     // context when operators are called during parsing
-    this.parseContext = function(log, options, nf) {
+    parseContext: function(log, options, nf) {
         this.log = log;
         this.options = options;
         this.nf = nf;
@@ -114,10 +151,10 @@ function NumberFormatter() {
         this.isPerc = false;
         
         this.isPost = false;
-    };
+    },
     
     // options used during parsing
-    this.parseNumberSimpleOptions = function() {
+    parseNumberSimpleOptions: function() {
         this.decimalStr = '.';
         this.groupStr = ',';
         this.strict = false;
@@ -208,22 +245,22 @@ function NumberFormatter() {
                 
                 // add operators
                 if (this.trim) {
-                    this.operatorsCached.add(new nf._modTrim());
+                    this.operatorsCached.add(new JsNumberFormatter.modules.Trim());
                 }
                 if (this.negativeMatch) {
-                    this.operatorsCached.add(new nf._modNegativeNumber());
+                    this.operatorsCached.add(new JsNumberFormatter.modules.NegativeNumber());
                 }
-                this.operatorsCached.add(new nf._modNumber());
+                this.operatorsCached.add(new JsNumberFormatter.modules.FormattedNumber());
                 if (this.percEnabled) {
-                    this.operatorsCached.add(new nf._modPercentage());
+                    this.operatorsCached.add(new JsNumberFormatter.modules.Percentage());
                 }
                 if (this.removeBadCh) {
-                    this.operatorsCached.add(new nf._modBadChars());
+                    this.operatorsCached.add(new JsNumberFormatter.modules.BadChars());
                 }
             }
             return this.operatorsCached;
         };
-	};
+	},
     
     
     /*  FORMATTING  */
@@ -232,7 +269,7 @@ function NumberFormatter() {
     /**
      * Formats a number (object) into a string, based on the options.
      */
-    this.formatNumber = function(number, options, log) {
+    formatNumber: function(number, options, log) {
         // handle log param
         log = typeof log !== 'undefined' ? log : false;
         
@@ -298,9 +335,9 @@ function NumberFormatter() {
             console.log('Result=' + result);
         }
         return result;
-    };
+    },
     
-    this.formatNumberOptions = function() {
+    formatNumberOptions: function() {
         this.groupMaskStr = ',###';
         this.decimalSeperatorStr = '.';
         this.decimalMaskStr = '##';
@@ -380,9 +417,9 @@ function NumberFormatter() {
                 this.decimalMask.compile();
             }
         };
-    };
+    },
     
-    this.formatMaskCompiled = function(maskStr) {
+    formatMaskCompiled: function(maskStr) {
         this.maskStr = maskStr;
         this.repeating = false;
         this.reversed = false;
@@ -543,44 +580,80 @@ function NumberFormatter() {
             console.log('Mask result=' + result);
             return result;
         };
-    };
+    },
     
     
     /*  UTILITY  */
     
     
-    this.round = function(value, decimals, log, isNeg, mode) {
-        if (typeof mode === 'undefined') {
-            mode = 0;
-        }
-        
-        var result;
-        if (mode === 0) {
-            // half-up
-            result = Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
-        } else if (mode === 1) {
-            // half-down
-        } else if (mode === 2) {
-            // away from zero
-            if (isNeg) {
-                result = Number(Math.floor(value + 'e' + decimals) + 'e-' + decimals);
-            } else {
-                result = Number(Math.ceil(value + 'e' + decimals) + 'e-' + decimals);
+    util: {
+        round: function(value, decimals, log, isNeg, mode) {
+            if (typeof mode === 'undefined') {
+                mode = 0;
             }
-        } else if (mode === 3) {
-            // towards zero
-            if (isNeg) {
-                result = Number(Math.ceil(value + 'e' + decimals) + 'e-' + decimals);
-            } else {
-                result = Number(Math.floor(value + 'e' + decimals) + 'e-' + decimals);
+            
+            var result;
+            if (mode === 0) {
+                // half-up
+                result = Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+            } else if (mode === 1) {
+                // half-down
+            } else if (mode === 2) {
+                // away from zero
+                if (isNeg) {
+                    result = Number(Math.floor(value + 'e' + decimals) + 'e-' + decimals);
+                } else {
+                    result = Number(Math.ceil(value + 'e' + decimals) + 'e-' + decimals);
+                }
+            } else if (mode === 3) {
+                // towards zero
+                if (isNeg) {
+                    result = Number(Math.ceil(value + 'e' + decimals) + 'e-' + decimals);
+                } else {
+                    result = Number(Math.floor(value + 'e' + decimals) + 'e-' + decimals);
+                }
             }
-        }
+            
+            if (log) {
+                console.log('[' + value + '] Rounded to ' + result);
+            }
+            return result;
+        },
         
-        if (log) {
-            console.log('[' + value + '] Rounded to ' + result);
+        HashMap: function() {
+            this._dict = {};
+            this._shared = {id: 1};
+            this._size = 0;
+            this.put = function put(key, value) {
+                if (typeof key == "object") {
+                    if (!key.hasOwnProperty._id) {
+                        key.hasOwnProperty = function(key) {
+                            return Object.prototype.hasOwnProperty.call(this, key);
+                        };
+                        key.hasOwnProperty._id = this._shared.id++;
+                    }
+                    key = key.hasOwnProperty._id;
+                }
+                if (typeof this._dict[key] === 'undefined') {
+                    this._size++;
+                }
+                
+                this._dict[key] = value;
+                return this;
+            };
+            
+            this.get = function get(key) {
+                if (typeof key == "object") {
+                    return this._dict[key.hasOwnProperty._id];
+                }
+                return this._dict[key];
+            };
+            
+            this.size = function() {
+                return this._size;
+            };
         }
-        return result;
-    };
+    },
     
     
     /*  MODULES  */
@@ -588,158 +661,160 @@ function NumberFormatter() {
     /**
      * Module for basic number parsing.
      */
-    this._modNumber = function() {
-        this.parse = function(origValue, currentValue, context) {
-            // strip out the group occurrances
-            currentValue = currentValue.replace(new RegExp(context.options.groupStr, 'g'), '');
-            if (context.log) {
-                console.log('[' + currentValue + '] Removed groups...');
-            }
-            
-            // replace the decimal separator (if needed)
-            if (context.options.decimalStr != '.') {
-                currentValue = currentValue.replace(new RegExp(context.options.decimalStr, 'g'), '.');
+    modules: {
+        FormattedNumber: function() {
+            this.parse = function(origValue, currentValue, context) {
+                // strip out the group occurrances
+                currentValue = currentValue.replace(new RegExp(context.options.groupStr, 'g'), '');
                 if (context.log) {
-                    console.log('[' + currentValue + '] Replaced decimal point(s)...');
-                }
-            }
-            
-            // handle strict options
-            if (context.options.strict) {
-                // check that there is 0 or 1 occurrances of the decimal point
-                if (context.log) {
-                    console.log('[' + currentValue + '] Counting decimal points...');
-                }
-                var count = currentValue.match(new RegExp('\\.', 'g')).length;
-                if (count > 1) {
-                    throw new Error('Input has more than 1 decimal point: ' + count);
+                    console.log('[' + currentValue + '] Removed groups...');
                 }
                 
-                if (!context.options.removeBadCh) {
-                    // flag any non numerics
+                // replace the decimal separator (if needed)
+                if (context.options.decimalStr != '.') {
+                    currentValue = currentValue.replace(new RegExp(context.options.decimalStr, 'g'), '.');
                     if (context.log) {
-                        console.log('[' + currentValue + '] Counting disallowed chars...');
-                    }
-                    count = currentValue.match(new RegExp(context.nf.consts.regexStrNonNumeric, 'g')).length;
-                    if (count > 0) {
-                        throw new Error('Input has ' + count + ' disallowed chars: ' + currentValue);
+                        console.log('[' + currentValue + '] Replaced decimal point(s)...');
                     }
                 }
-            }
-            
-            return currentValue;
-        };
-        
-        this.postParse = function(origValue, currentValue, context) { return currentValue; };
-    };
-    
-    this._modBadChars = function() {
-        this.parse = function(origValue, currentValue, context) {
-            if (context.options.removeBadCh) {
-                if (context.log) {
-                    console.log('[' + currentValue + '] Removing bad chars...');
-                }
-                currentValue = currentValue.replace(new RegExp(context.nf.consts.regexStrNonNumeric, 'g'), '');
-                if (context.log) {
-                    console.log('[' + currentValue + '] Removed bad chars...');
-                }
-            }
-            return currentValue;
-        };
-        
-        this.postParse = function(origValue, currentValue, context) { return currentValue; };
-    };
-    
-    
-    /**
-     * Module for trimming.
-     */
-    this._modTrim = function() {
-        this.parse = function(origValue, currentValue, context) {
-            if (context.options.trim) {
-                currentValue = currentValue.replace(new RegExp('^\\s+|\\s+$', 'g'), '');
-                if (context.log) {
-                    console.log('[' + currentValue + '] Trimmed');
-                }
-            }
-            return currentValue;
-        };
-        
-        this.postParse = function(origValue, currentValue, context) { return currentValue; };
-    };
-    
-    this._modNegativeNumber = function() {
-        this.parse = function(origValue, currentValue, context) {
-            // determine if a negative number string or not
-            if (context.options.negativeMatch) {
-                if (context.log) {
-                    console.log('[' + currentValue + '] Removing any negative signs...');
-                }
-                var match = context.options.negativeMatch.exec(currentValue);
-                if (match) {
-                    currentValue = match[1];
-                    context.isNegative = true;
+                
+                // handle strict options
+                if (context.options.strict) {
+                    // check that there is 0 or 1 occurrances of the decimal point
                     if (context.log) {
-                        console.log('[' + currentValue + '] Removed negative sign and any fixes');
+                        console.log('[' + currentValue + '] Counting decimal points...');
+                    }
+                    var count = currentValue.match(new RegExp('\\.', 'g')).length;
+                    if (count > 1) {
+                        throw new Error('Input has more than 1 decimal point: ' + count);
+                    }
+                    
+                    if (!context.options.removeBadCh) {
+                        // flag any non numerics
+                        if (context.log) {
+                            console.log('[' + currentValue + '] Counting disallowed chars...');
+                        }
+                        count = currentValue.match(new RegExp(context.nf.consts.regexStrNonNumeric, 'g')).length;
+                        if (count > 0) {
+                            throw new Error('Input has ' + count + ' disallowed chars: ' + currentValue);
+                        }
                     }
                 }
-            }
+                
+                return currentValue;
+            };
             
-            return currentValue;
-        };
-        
-        this.postParse = function(origValue, currentValue, context) {
-            // add prefix to parsed number if a negative one
-            if (context.isNegative) {
-                currentValue = '-' + currentValue;
-            }
-            return currentValue;
-        };
-    };
+            this.postParse = function(origValue, currentValue, context) { return currentValue; };
+        },
     
-    /**
-     * Module for percentage handling.
-     */
-    this._modPercentage = function() {
-        this.parse = function(origValue, currentValue, context) {
-            if (context.options.percEnabled) {
-                var match = context.options.percMatch.exec(currentValue);
-                if (match) {
-                    currentValue = match[1];
-                    context.isPerc = true;
+        BadChars: function() {
+            this.parse = function(origValue, currentValue, context) {
+                if (context.options.removeBadCh) {
                     if (context.log) {
-                        console.log('[' + currentValue + '] is percentage');
+                        console.log('[' + currentValue + '] Removing bad chars...');
+                    }
+                    currentValue = currentValue.replace(new RegExp(context.nf.consts.regexStrNonNumeric, 'g'), '');
+                    if (context.log) {
+                        console.log('[' + currentValue + '] Removed bad chars...');
                     }
                 }
-            }
-            return currentValue;
-        };
+                return currentValue;
+            };
+            
+            this.postParse = function(origValue, currentValue, context) { return currentValue; };
+        },
+    
+    
+        /**
+         * Module for trimming.
+         */
+        Trim: function() {
+            this.parse = function(origValue, currentValue, context) {
+                if (context.options.trim) {
+                    currentValue = currentValue.replace(new RegExp('^\\s+|\\s+$', 'g'), '');
+                    if (context.log) {
+                        console.log('[' + currentValue + '] Trimmed');
+                    }
+                }
+                return currentValue;
+            };
+            
+            this.postParse = function(origValue, currentValue, context) { return currentValue; };
+        },
+    
+        NegativeNumber: function() {
+            this.parse = function(origValue, currentValue, context) {
+                // determine if a negative number string or not
+                if (context.options.negativeMatch) {
+                    if (context.log) {
+                        console.log('[' + currentValue + '] Removing any negative signs...');
+                    }
+                    var match = context.options.negativeMatch.exec(currentValue);
+                    if (match) {
+                        currentValue = match[1];
+                        context.isNegative = true;
+                        if (context.log) {
+                            console.log('[' + currentValue + '] Removed negative sign and any fixes');
+                        }
+                    }
+                }
+                
+                return currentValue;
+            };
         
-        this.postParse = function(origValue, currentValue, context) {
-            if (context.isPerc) {
-                // work out existing dps
-                var dpCount = currentValue.indexOf(context.options.decimalStr);
-                if (dpCount >= 0) {
-                    dpCount = currentValue.length - (dpCount + 1) + 2;
-                } else {
-                    dpCount = 2;
+            this.postParse = function(origValue, currentValue, context) {
+                // add prefix to parsed number if a negative one
+                if (context.isNegative) {
+                    currentValue = '-' + currentValue;
                 }
-                
-                // divide by 100
-                var preResult = new Number(currentValue);
-                currentValue = preResult /= 100;
-                
-                // force some rounding to the dp we expected
-                currentValue = context.nf.round(currentValue, dpCount, context.log, context.isNegative);
-                
-                if (context.log) {
-                    console.log('[' + currentValue + '] Converted to percentage...');
+                return currentValue;
+            };
+        },
+    
+        /**
+         * Module for percentage handling.
+         */
+        Percentage: function() {
+            this.parse = function(origValue, currentValue, context) {
+                if (context.options.percEnabled) {
+                    var match = context.options.percMatch.exec(currentValue);
+                    if (match) {
+                        currentValue = match[1];
+                        context.isPerc = true;
+                        if (context.log) {
+                            console.log('[' + currentValue + '] is percentage');
+                        }
+                    }
                 }
-            }
-            return currentValue;
-        };
-    };
-}
+                return currentValue;
+            };
+            
+            this.postParse = function(origValue, currentValue, context) {
+                if (context.isPerc) {
+                    // work out existing dps
+                    var dpCount = currentValue.indexOf(context.options.decimalStr);
+                    if (dpCount >= 0) {
+                        dpCount = currentValue.length - (dpCount + 1) + 2;
+                    } else {
+                        dpCount = 2;
+                    }
+                    
+                    // divide by 100
+                    var preResult = new Number(currentValue);
+                    currentValue = preResult /= 100;
+                    
+                    // force some rounding to the dp we expected
+                    currentValue = JsNumberFormatter.util.round(currentValue, dpCount, context.log, context.isNegative);
+                    
+                    if (context.log) {
+                        console.log('[' + currentValue + '] Converted to percentage...');
+                    }
+                }
+                return currentValue;
+            };
+        }
+    }
+};
 
 
 /*  EXCEPTIONS  */
@@ -756,4 +831,4 @@ NaNError.prototype = Error.prototype;
 
 
 // export for RequireJS support (mainly to allow mocha to work)
-module.exports.nf = new NumberFormatter();
+module.exports.nf = JsNumberFormatter;

@@ -7,6 +7,10 @@ This is intended to be the basis of my rewrite of the jQuery plugin jQuery-Numbe
 
 Purely at prototype stage right now.
 
+Supports many parsing and formatting, including a module for locale support.
+
+Looking fairly good now, still a bit of work to come.
+
 Features: see the jQuery plugin, I will be adding many more also.
 Dev Env: Cloud9 - http://c9.io/ap0/jsnumberformatter
 Cloud9 Setup:
