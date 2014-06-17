@@ -1,9 +1,10 @@
 jsNumberFormatter
 =================
 
-Number formatting library - Pure stand-alone javascript
-Status: Alpha
-Version 0.1
+JavaScript Number formatting &amp; parsing library - Pure stand-alone javascript
+
++ Status: Alpha
++ Version 0.2
 
 This is intended to be the basis of my rewrite of the jQuery plugin jQuery-NumberFormatter (https://code.google.com/p/jquery-numberformatter/), providing base methods that do not require jQuery at all or any other dependency.
 
@@ -26,58 +27,72 @@ Features: (see the jQuery plugin for a rough idea, I will be adding many more al
   + Rounding options
 + Formatting a JS number to format X
   + Prefix and Postfix support
-  - This section needs a little more work still
-  - Percentage formatting (coming soon)
   + Rounding options
+  - (TODO Percentage formatting)
+  - (TODO Modularlisation)
 + Locale Support for both parsing and formatting
 + Modular parsing
   + Allows you to add functions to run during the parsing
 + Togglable logging to console
 
-Usage:
+## Usage:
 
-A couple of simple parsing examples -
+### A couple of simple parsing examples -
 
-a) // default options (i.e. no locale)
-   var options = new JsNumberFormatter.parseNumberSimpleOptions(); 
-   var number = JsNumberFormatter.parseNumberSimple('-1,000,123.45', options, true);
-   console.log(number); // == -1000123.45
+a) default options (i.e. no locale)
+```
+var options = new JsNumberFormatter.parseNumberSimpleOptions(); 
+var number = JsNumberFormatter.parseNumberSimple('-1,000,123.45', options, true);
+console.log(number); // == -1000123.45
+```
 
-b) // espanol locale parsing
+b) espanol locale parsing
+```javascript
    var options = new JsNumberFormatter.locales.parseOptions('es', nf);
    var number = JsNumberFormatter.parseNumberSimple('1,00', options, true);
    console.log(number); // == -1
+```
 
-c) // no locale but with custom negative number mask (regex)
+c) no locale but with custom negative number mask (regex)
+```javascript
    var options = new JsNumberFormatter.parseNumberSimpleOptions().specifyAll('.', ',', false, false, false, '^\\(([^\\)]+)\\)$');
    var number = JsNumberFormatter.parseNumberSimple('(1,000,123.45)', options, true);
    console.log(number); // == -1000123.45
+```
 
-d) // NL locale, parsing dollars (stripping non-numerics)
+d) NL locale, parsing dollars (stripping non-numerics)
+```javascript
    var options = new JsNumberFormatter.locales.parseOptions('nl')
                                 .specifyRemoveBadCh(true)
                                 .specifyNegativeMatch('^.*-(.+)');
    var number = JsNumberFormatter.parseNumberSimple('$-1.000.123,45', options, true);
    console.log(number); // == -1000123.45
+```
 
-e) // no locale, percentage parsing
+e) no locale, percentage parsing
+```javascript
    var options = new JsNumberFormatter.parseNumberSimpleOptions()
                     .specifyAll('.', ',', false, false, true)
                     .specifyPerc(true);
    var number = JsNumberFormatter.parseNumberSimple('123.45%', options, true);
    console.log(number); // == 1.2345
+```
 
-A couple of formatting examples
+### A couple of formatting examples -
 
-a) // no locale
+a)  no locale
+```javascript
    var options = new JsNumberFormatter.formatNumberOptions();
    var numberStr = JsNumberFormatter.formatNumber(1234.56, options, true);
    console.log(numberStr); // == 1,234.56
-   
-b) // espanol locale formatting
+```
+
+b) espanol locale formatting
+```javascript
    var options = new JsNumberFormatter.locales.formatOptions('es')
                     .specifyDecimalMask('00');
    var number = JsNumberFormatter.formatNumber(1, options, true);
+```
 
 =================
 
