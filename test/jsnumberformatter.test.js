@@ -54,21 +54,64 @@ describe('parseNumberSimple', function() {
         });
         
         describe('Test7-Percentages', function() {
-            it('Parse to 1.2345', function() {
+            it('Parse 123.45% -> 1.2345', function() {
                 var options = new nf.parseNumberSimpleOptions()
                     .specifyAll('.', ',', false, false, true)
                     .specifyPerc(true);
                 var number = nf.parseNumberSimple('123.45%', options, true);
                 assert.equal(number, 1.2345);
-                
-                number = nf.parseNumberSimple('-1.45%', options, true);
+            });
+            it('Parse -1.45% -> -0.0145', function() {
+                var options = new nf.parseNumberSimpleOptions()
+                    .specifyAll('.', ',', false, false, true)
+                    .specifyPerc(true);
+                var number = nf.parseNumberSimple('-1.45%', options, true);
                 assert.equal(number, -0.0145);
-                
-                number = nf.parseNumberSimple('-.12%', options, true);
+            });
+            it('Parse -.12% -> -0.0012', function() {
+                var options = new nf.parseNumberSimpleOptions()
+                    .specifyAll('.', ',', false, false, true)
+                    .specifyPerc(true);
+                var number = nf.parseNumberSimple('-.12%', options, true);
                 assert.equal(number, -0.0012);
-                
-                number = nf.parseNumberSimple('-1%', options, true);
+            });
+            it('Parse -1% -> -0.01', function() {
+                var options = new nf.parseNumberSimpleOptions()
+                    .specifyAll('.', ',', false, false, true)
+                    .specifyPerc(true);
+                var number = nf.parseNumberSimple('-1%', options, true);
                 assert.equal(number, -0.01);
+            });
+        });
+        
+        describe('Test7-Rounding', function() {
+            it('Round Half-up to 1.235', function() {
+                var options = new nf.parseNumberSimpleOptions()
+                    .specifyAll('.', ',', false, false, true)
+                    .specifyRounding(nf.util.RoundHalfUp, 3);
+                var number = nf.parseNumberSimple('1.2345', options, true);
+                assert.equal(number, 1.235);
+            });
+            it('Round Half-down to 1.234', function() {
+                var options = new nf.parseNumberSimpleOptions()
+                    .specifyAll('.', ',', false, false, true)
+                    .specifyRounding(nf.util.RoundHalfDown, 3);
+                var number = nf.parseNumberSimple('1.2345', options, true);
+                assert.equal(number, 1.234);
+            });
+            it('Round Away-From-Zero to 1.235', function() {
+                var options = new nf.parseNumberSimpleOptions()
+                    .specifyAll('.', ',', false, false, true)
+                    .specifyRounding(nf.util.RoundAwayFromZero, 3);
+                var number = nf.parseNumberSimple('1.2341', options, true);
+                assert.equal(number, 1.235);
+            });
+            it('Round Towards-Zero to 1.234', function() {
+                var options = new nf.parseNumberSimpleOptions()
+                    .specifyAll('.', ',', false, false, true)
+                    .specifyRounding(nf.util.RoundTowardsZero, 3);
+                var number = nf.parseNumberSimple('1.2349', options, true);
+                assert.equal(number, 1.234);
             });
         });
     });
@@ -209,6 +252,27 @@ describe('formatNumber', function() {
                     .specifyAll('#,###', '##');
                 var numberStr = nf.formatNumber(0, options, true);
                 assert.equal(numberStr, '');
+            });
+        });
+        
+        describe('Test10-Rounding', function() {
+            it('Format to 123.4X', function() {
+                var options = new nf.formatNumberOptions()
+                    .specifyAll('#,###', '00');
+                var numberStr = nf.formatNumber(123.455, options, true);
+                assert.equal(numberStr, '123.46');
+
+                options.specifyRounding(nf.util.RoundHalfDown);
+                numberStr = nf.formatNumber(123.455, options, true);
+                assert.equal(numberStr, '123.45');
+                
+                options.specifyRounding(nf.util.RoundAwayFromZero);
+                numberStr = nf.formatNumber(123.451, options, true);
+                assert.equal(numberStr, '123.46');
+                
+                options.specifyRounding(nf.util.RoundTowardsZero);
+                numberStr = nf.formatNumber(123.459, options, true);
+                assert.equal(numberStr, '123.45');
             });
         });
     });

@@ -110,9 +110,6 @@ var JsNumberFormatter = {
         }
         
         // finally try to parse/force to a javascript number (if needed)
-        if (log) {
-            console.log('Output: ' + newNumberString);
-        }
         var result;
         if (typeof newNumberString === 'Number') {
             result = newNumberString;
@@ -121,6 +118,16 @@ var JsNumberFormatter = {
         }
         if (isNaN(result)) {
             throw new NaNError();
+        }
+        
+        // final rounding
+        if (options.roundingDecimalPlaces >= 0) {
+            result = JsNumberFormatter.util.round(result, options.roundingDecimalPlaces, log,
+                                                  result < 0, options.roundingMode);
+        }
+        
+        if (log) {
+            console.log('Output: ' + result);
         }
         
         return result;
@@ -165,6 +172,10 @@ var JsNumberFormatter = {
         
         // operators cache
         this.operatorsCached = null;
+        
+        // rounding
+        this.roundingDecimalPlaces = -1; // unlimited
+        this.roundingMode = JsNumberFormatter.util.RoundHalfUp;
         
         /**
          * Specifies all the main options.
@@ -245,6 +256,23 @@ var JsNumberFormatter = {
             return this;
         };
         
+        this.specifyRounding = function(roundingMode, decimalPlaces) {
+            if (typeof roundingMode === 'undefined') {
+                throw new TypeError('Expecting a number for roundingMode param');
+            }
+            if (typeof roundingMode !== 'number') {
+                throw new TypeError('Expecting a number for roundingMode param');
+            }
+            if (typeof decimalPlaces !== 'undefined') {
+                if (typeof decimalPlaces !== 'number') {
+                    throw new TypeError('Expecting a number for decimalPlaces param');
+                }
+                this.roundingDecimalPlaces = decimalPlaces;
+            }
+            this.roundingMode = roundingMode;
+            return this;
+        };
+        
         this.print = function() {
             return 'parseNumberSimpleOptions{decimalStr:"' + this.decimalStr
                 + '",groupStr:"' + this.groupStr
@@ -310,14 +338,27 @@ var JsNumberFormatter = {
             options.compile(new this.formatMaskCompiled(options.groupMaskStr), new this.formatMaskCompiled(options.decimalMaskStr), log);
         }
         
+        // get just the decimal part length
+        var decimalLen = 0;
+        var match = this.consts.numberRegex.exec(number);
+        if (match) {
+            decimalLen = match[2].length;
+        }
+        
+        // do any rounding
+        if (options.decimalMaskStr.length < decimalLen) {
+            number = JsNumberFormatter.util.round(number, options.decimalMaskStr.length, log,
+                                                  number < 0, options.roundingMode);
+        }
+        
         // break up number into 2 strings, 1 for the integer and 1 for the decimals
         if (log) {
             console.log('Splitting number to parts...');
         }
         
+        match = this.consts.numberRegex.exec(number);
         var integerPartStr;
         var decimalPartStr;
-        var match = this.consts.numberRegex.exec(number);
         if (match) {
             // has 2 parts
             integerPartStr = match[1];
@@ -327,6 +368,7 @@ var JsNumberFormatter = {
             integerPartStr = number;
             decimalPartStr = '';
         }
+        decimalLen = decimalPartStr.length;
         if (log) {
             console.log('Parts=integer:' + integerPartStr + ',decimal:' + decimalPartStr);
         }
@@ -379,6 +421,9 @@ var JsNumberFormatter = {
         this.compiled = false;
         
         this.numberMaskValidRegex = new RegExp('[#0]', 'g');
+        
+        // rounding support
+        this.roundingMode = JsNumberFormatter.util.RoundHalfUp;
         
         this.specifyAll = function(groupMaskStr, decimalMaskStr, decimalSeperatorStr, negativeMaskStr) {
             // check basic params integrity and handle actually apply the changes
@@ -441,6 +486,17 @@ var JsNumberFormatter = {
             return this;
         };
         
+        this.specifyRounding = function(roundingMode) {
+            if (typeof roundingMode === 'undefined') {
+                throw new TypeError('Expecting a number for roundingMode param');
+            }
+            if (typeof roundingMode !== 'number') {
+                throw new TypeError('Expecting a number for roundingMode param');
+            }
+            this.roundingMode = roundingMode;
+            return this;
+        };
+        
         this.print = function() {
             return 'parseNumberSimpleOptions{groupMaskStr:"' + this.groupMaskStr
                 + '",decimalMaskStr:"' + this.decimalMaskStr
@@ -471,6 +527,8 @@ var JsNumberFormatter = {
         
         this.compiled = false;
         this.maskDigitSize = -1;
+        
+        this.roundingMode = JsNumberFormatter.util.RoundHalfUp;
         
         this.apply = function(pureNumericStr, log) {
             if (!this.compiled) {
@@ -671,31 +729,45 @@ var JsNumberFormatter = {
     
     
     util: {
+        RoundHalfUp: 0,
+        RoundHalfDown: 1,
+        RoundAwayFromZero: 2,
+        RoundTowardsZero: 3,
+        
         round: function(value, decimals, log, isNeg, mode) {
             if (typeof mode === 'undefined') {
-                mode = 0;
+                mode = JsNumberFormatter.util.RoundHalfUp;
+            }
+            
+            if (log) {
+                console.log('Rounding ' + value + ' using mode=' + mode);
             }
             
             var result;
-            if (mode === 0) {
+            if (mode === JsNumberFormatter.util.RoundHalfUp) {
                 // half-up
                 result = Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
-            } else if (mode === 1) {
+            } else if (mode === JsNumberFormatter.util.RoundHalfDown) {
                 // half-down
-            } else if (mode === 2) {
+                var diff = 5 / Math.pow(10, decimals + 1);
+                value = value - diff;
+                result = Number(Math.ceil(value + 'e' + decimals) + 'e-' + decimals);
+            } else if (mode === JsNumberFormatter.util.RoundAwayFromZero) {
                 // away from zero
                 if (isNeg) {
                     result = Number(Math.floor(value + 'e' + decimals) + 'e-' + decimals);
                 } else {
                     result = Number(Math.ceil(value + 'e' + decimals) + 'e-' + decimals);
                 }
-            } else if (mode === 3) {
+            } else if (mode === JsNumberFormatter.util.RoundTowardsZero) {
                 // towards zero
                 if (isNeg) {
                     result = Number(Math.ceil(value + 'e' + decimals) + 'e-' + decimals);
                 } else {
                     result = Number(Math.floor(value + 'e' + decimals) + 'e-' + decimals);
                 }
+            } else {
+                throw new Error('Unknown rounding mode:"' + mode);
             }
             
             if (log) {
