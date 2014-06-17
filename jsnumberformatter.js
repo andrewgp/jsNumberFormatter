@@ -307,7 +307,7 @@ var JsNumberFormatter = {
             if (log) {
                 console.log('Compiling options...');
             }
-            options.compile(new this.formatMaskCompiled(options.groupMaskStr), new this.formatMaskCompiled(options.decimalMaskStr));
+            options.compile(new this.formatMaskCompiled(options.groupMaskStr), new this.formatMaskCompiled(options.decimalMaskStr), log);
         }
         
         // break up number into 2 strings, 1 for the integer and 1 for the decimals
@@ -352,6 +352,14 @@ var JsNumberFormatter = {
             result = formatterIntPartStr;
         }
         
+        // apply prefix & postfix (if available)
+        if (options.prefix !== null) {
+            result = options.prefix + result;
+        }
+        if (options.postfix !== null) {
+            result = result + options.postfix;
+        }
+        
         if (log) {
             console.log('Result=' + result);
         }
@@ -363,6 +371,8 @@ var JsNumberFormatter = {
         this.decimalSeperatorStr = '.';
         this.decimalMaskStr = '##';
         this.negativeMaskStr = '-(.+)';
+        this.prefix = null;
+        this.postfix = null;
         
         this.groupMask = null;
         this.decimalMask = null;
@@ -420,6 +430,17 @@ var JsNumberFormatter = {
             return this;
         };
         
+        this.specifyFixes = function(prefix, postfix) {
+            this.prefix = prefix;
+            if (typeof postfix !== 'undefined') {
+                if (typeof postfix !== 'string') {
+                    throw new TypeError('Expecting a string for postfix param');
+                }
+                this.postfix = postfix;
+            }
+            return this;
+        };
+        
         this.print = function() {
             return 'parseNumberSimpleOptions{groupMaskStr:"' + this.groupMaskStr
                 + '",decimalMaskStr:"' + this.decimalMaskStr
@@ -428,17 +449,17 @@ var JsNumberFormatter = {
                 + '"}';
         };
         
-        this.compile = function(groupMask, decimalMask) {
+        this.compile = function(groupMask, decimalMask, log) {
             if (!this.compiled) {
                 this.groupMask = groupMask;
                 this.groupMask.reversed = true;
                 this.groupMask.repeating = true;
-                this.groupMask.compile();
+                this.groupMask.compile(log);
                 
                 this.decimalMask = decimalMask;
                 this.decimalMask.reversed = false;
                 this.decimalMask.repeating = false;    // TODO allow repeating here
-                this.decimalMask.compile();
+                this.decimalMask.compile(log);
             }
         };
     },
@@ -451,26 +472,32 @@ var JsNumberFormatter = {
         this.compiled = false;
         this.maskDigitSize = -1;
         
-        this.apply = function(pureNumericStr) {
+        this.apply = function(pureNumericStr, log) {
             if (!this.compiled) {
                 throw new Error('Mask not compiled');
             }
             
             pureNumericStr = '' + pureNumericStr;
             
-            console.log('Applying mask:"' + this.maskStr + '",reversed=' + this.reversed + ',input="' + pureNumericStr + '"');
+            if (log) {
+                console.log('Applying mask:"' + this.maskStr + '",reversed=' + this.reversed + ',input="' + pureNumericStr + '"');
+            }
             var result = '';
             if (this.repeating) {
                 if (this.reversed) {
                     var strLen = pureNumericStr.length;
-                    console.log('length=' + strLen);
+                    if (log) {
+                        console.log('length=' + strLen);
+                    }
                     for (var pos = strLen; pos >= 0; pos -= this.maskDigitSize) {    // FIXME going to truncate?
                         // break into the digits to format
-                        console.log('Pos:' + pos);
+                        if (log) {
+                            console.log('Pos:' + pos);
+                        }
                         var bottomBound = pos - this.maskDigitSize < 0 ? 0 : pos - this.maskDigitSize;
                         var subDigits = strLen === 1 ? ('' + pureNumericStr).substring(bottomBound, pos) : pureNumericStr.substring(bottomBound, pos);
                         
-                        var newStr = this._applyReverseMask(maskStr, subDigits, bottomBound > 0);
+                        var newStr = this._applyReverseMask(maskStr, subDigits, bottomBound > 0, log);
                         if (newStr === '') {
                             break;
                         }
@@ -482,20 +509,21 @@ var JsNumberFormatter = {
                 
                 return result;
             } else {
-                result = this.reversed ? this._applyReverseMask(maskStr, pureNumericStr, false) : this._applyMask(maskStr, pureNumericStr);
+                result = this.reversed ? this._applyReverseMask(maskStr, pureNumericStr, false, log) : this._applyMask(maskStr, pureNumericStr, log);
             }
             return result;
         };
         
-        this.compile = function() {
+        this.compile = function(log) {
             var match = this.maskStr.match(new RegExp('[0#]', 'g'));
             this.maskDigitSize = match.length;
-            console.log('Compiled at length:' + this.maskDigitSize);
-            
+            if (log) {
+                console.log('Compiled at length:' + this.maskDigitSize);
+            }
             this.compiled = true;
         };
         
-        this._applyMask = function(maskStr, pureNumericStr) {
+        this._applyMask = function(maskStr, pureNumericStr, log) {
             var result = '';
             // sanity check
             if (maskStr.length < pureNumericStr.length) {
@@ -520,7 +548,9 @@ var JsNumberFormatter = {
                     }
                 } else {
                     // no more numbers to insert
-                    console.log('Mask ch:' + maskCh);
+                    if (log) {
+                        console.log('Mask ch:' + maskCh);
+                    }
                     if (maskCh === '0') {
                         // zero padding
                         console.log('Zero pad');
@@ -536,12 +566,22 @@ var JsNumberFormatter = {
                     }
                 }
             }
-            console.log('Mask result=' + result);
+            
+            // special consideration to completely optional masks
+            if (result == '0' && maskStr.charAt(maskStr.length - 1) == '#') {
+                result = '';
+            }
+            
+            if (log) {
+                console.log('Mask result=' + result);
+            }
             return result;
         };
         
-        this._applyReverseMask = function(maskStr, pureNumericStr, areMore) {
-            console.log('Applying reverse mask:"' + maskStr + '"areMore:' + areMore + ',str:"' + pureNumericStr + '"');
+        this._applyReverseMask = function(maskStr, pureNumericStr, areMore, log) {
+            if (log) {
+                console.log('Applying reverse mask:"' + maskStr + '"areMore:' + areMore + ',str:"' + pureNumericStr + '"');
+            }
             var result = '';
             // sanity check
             if (maskStr.length < pureNumericStr.length) {
@@ -553,19 +593,25 @@ var JsNumberFormatter = {
             var holdChars = null;
             for (var i = maskStr.length - 1; i >= 0; i--) {
                 var maskCh = maskStr.charAt(i);
-                console.log('Mask ch:' + maskCh);
+                if (log) {
+                    console.log('Mask ch:' + maskCh);
+                }
                 
                 if (digitPos >= 0) {
                     console.log('Digit Pos:' + digitPos);
                     // still numbers to insert
                     if (maskCh === '0' || maskCh == '#') {
                         var digit = pureNumericStr.charAt(digitPos);
-                        console.log('Digit:' + digit);
+                        if (log) {
+                            console.log('Digit:' + digit);
+                        }
                         digitPos--;
                         
                         // write out any held chars
                         if (holdChars !== null) {
-                            console.log('Writing hold chars:' + holdChars);
+                            if (log) {
+                                console.log('Writing hold chars:' + holdChars);
+                            }
                             result = holdChars + result;
                             holdChars = null;
                         }
@@ -575,14 +621,18 @@ var JsNumberFormatter = {
                     } else {
                         // hold the char
                         holdChars = holdChars !== null ? maskCh + holdChars : maskCh;
-                        console.log('Held char:' + maskCh);
+                        if (log) {
+                            console.log('Held char:' + maskCh);
+                        }
                     }
                 } else {
                     // no more numbers to insert
                     if (maskCh === '0') {
                         // write out any held chars
                         if (null !== holdChars) {
-                            console.log('Writing hold chars:' + holdChars);
+                            if (log) {
+                                console.log('Writing hold chars:' + holdChars);
+                            }
                             result = holdChars + result;
                             holdChars = null;
                         }
@@ -594,14 +644,24 @@ var JsNumberFormatter = {
                         break;
                     } else {
                         holdChars = holdChars !== null ? maskCh + holdChars : maskCh;
-                        console.log('Held char:' + maskCh);
+                        if (log) {
+                            console.log('Held char:' + maskCh);
+                        }
                     }
                 }
             }
             if (areMore && holdChars !== null) {
                 result = holdChars + result;
             }
-            console.log('Mask result=' + result);
+            
+            // special consideration to completely optional masks
+            if (result == '0' && maskStr.charAt(maskStr.length - 1) == '#') {
+                result = '';
+            }
+            
+            if (log) {
+                console.log('Mask result=' + result);
+            }
             return result;
         };
     },

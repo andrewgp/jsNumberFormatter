@@ -23,9 +23,12 @@ Features: (see the jQuery plugin for a rough idea, I will be adding many more al
   + User defined negative number formats (-1, 1- or (1) etc)
   + Trimming of white pace around the value
   + Removal of any non-numeric chars
+  - Rounding options
 + Formatting a JS number to format X
-  - Prefix and Postfix support (coming soon)
+  + Prefix and Postfix support
   - This section needs a little more work still
+  - Percentage formatting (coming soon)
+  - Rounding options
 + Locale Support for both parsing and formatting
 + Modular parsing
   + Allows you to add functions to run during the parsing

@@ -161,5 +161,55 @@ describe('formatNumber', function() {
                 assert.equal(numberStr, '0,123.00');
             });
         });
+        
+        describe('Test6-Prefix', function() {
+            it('Format to $ 0,123.00', function() {
+                var options = new nf.formatNumberOptions()
+                    .specifyAll('0,000', '00')
+                    .specifyFixes('$ ');
+                var numberStr = nf.formatNumber(123, options, true);
+                assert.equal(numberStr, '$ 0,123.00');
+            });
+        });
+        
+        describe('Test7-Postfix', function() {
+            it('Format to $ 123.00 $', function() {
+                var options = new nf.formatNumberOptions()
+                    .specifyAll('0,000', '00')
+                    .specifyFixes('$ ', ' $');
+                var numberStr = nf.formatNumber(123, options, true);
+                assert.equal(numberStr, '$ 0,123.00 $');
+            });
+        });
+        
+        describe('Test8-OptionalGroupDigits', function() {
+            it('Format to 123.00', function() {
+                var options = new nf.formatNumberOptions()
+                    .specifyAll('#,##0', '00');
+                var numberStr = nf.formatNumber(123, options, true);
+                assert.equal(numberStr, '123.00');
+                
+                options.specifyAll('#,#00', '00');
+                numberStr = nf.formatNumber(12, options, true);
+                assert.equal(numberStr, '12.00');
+                
+                options.specifyAll('#,000', '00');
+                numberStr = nf.formatNumber(12, options, true);
+                assert.equal(numberStr, '012.00');
+                
+                options.specifyAll('#,###', '00');
+                numberStr = nf.formatNumber(0, options, true);
+                assert.equal(numberStr, '.00');
+            });
+        });
+        
+        describe('Test9-OptionalGroupDigits2', function() {
+            it('Format to 123.00', function() {
+                var options = new nf.formatNumberOptions()
+                    .specifyAll('#,###', '##');
+                var numberStr = nf.formatNumber(0, options, true);
+                assert.equal(numberStr, '');
+            });
+        });
     });
 });
