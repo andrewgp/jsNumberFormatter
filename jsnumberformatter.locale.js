@@ -6,18 +6,18 @@
  * DATE: 2014-06-11
  * AUTHOR: Andrew G Parry
  * SOURCE: https://github.com/andrewgp/jsNumberFormatter
- * 
+ *
  * VERSION: 0.1
  * STATE: Prototype
  * DEPENDANCIES: jsNumberFormatter.js
- * 
+ *
  * STATUS: -
- * 
+ *
  * CHANGELOG:
  * 2014-06-11   AP  Added component
- * 
+ *
  * LICENSE:
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2014 Andrew G Parry
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,10 +26,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -44,16 +44,16 @@ var JsNumberFormatter = JsNumberFormatter || require('./jsnumberformatter.js').n
 
 // locales namespace
 JsNumberFormatter.locales = {
-    localesLikeUS: [ 'ae','au','ca','cn','eg','gb','hk','il','in','jp','sk','th','tw','us' ],
-    localesLikeDE: [ 'at','br','de','dk','es','gr','it','nl','pt','tr','vn' ],
+    localesLikeUS: [ 'ae','au','ca','cn','eg','gb','hk','il','in','jo','jp','my','mx','nz','qa','sk','sg','th','tw','us','za' ],
+    localesLikeDE: [ 'at','br','de','dk','es','gr','is','it','nl','pt','tr','vn' ],
     localesLikeFR: [ 'bg','cz','fi','fr','no','pl','ru','se' ],
     localesLikeCH: [ 'ch' ],
-    
+
     allLocales: [ ],
     localeFormatting: [ ['.', ',', '^-(.+)'], [',', '.', '^-(.+)'], [',', ' ', '^-(.+)'], ['.', '\'', '^-(.+)'] ],
-    
+
     localesMap: new JsNumberFormatter.util.HashMap(),
-    
+
     parseOptions: function(locale, isFullLocale) {
         var codes = JsNumberFormatter.locales._getCodes(locale, isFullLocale);
         var dec = codes[0];
@@ -61,7 +61,7 @@ JsNumberFormatter.locales = {
         var neg = codes[2];
         return new JsNumberFormatter.parseNumberSimpleOptions().specifyAll(dec, group, false, true, false, '^' + neg + '(.+)');
     },
-    
+
     formatOptions: function(locale, isFullLocale) {
         var codes = JsNumberFormatter.locales._getCodes(locale, isFullLocale);
         var dec = codes[0];
@@ -69,13 +69,13 @@ JsNumberFormatter.locales = {
         var neg = codes[2];
         return new JsNumberFormatter.formatNumberOptions().specifyAll(group + '###', '##', dec, neg);
     },
-    
+
     _getCodes: function(locale, isFullLocale) {
         // handle optional params
         if (typeof isFullLocale === 'undefined') {
             isFullLocale = false;
         }
-        
+
         if (JsNumberFormatter.locales.allLocales.length === 0) {
             JsNumberFormatter.locales.allLocales = [
                   JsNumberFormatter.locales.localesLikeUS,
@@ -83,7 +83,7 @@ JsNumberFormatter.locales = {
                   JsNumberFormatter.locales.localesLikeFR,
                   JsNumberFormatter.locales.localesLikeCH ];
         }
-        
+
         if (JsNumberFormatter.locales.localesMap.size() === 0) {
             for (var localeGroupIdx = 0; localeGroupIdx < JsNumberFormatter.locales.allLocales.length; localeGroupIdx++) {
                 var localeGroup = JsNumberFormatter.locales.allLocales[localeGroupIdx];
@@ -120,4 +120,6 @@ JsNumberFormatter.locales = {
 
 
 // export for RequireJS support (mainly to allow mocha to work)
-module.exports.nfl = JsNumberFormatter.locales;
+if (module) {
+    module.exports.nfl = JsNumberFormatter.locales;
+}
