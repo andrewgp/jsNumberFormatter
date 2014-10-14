@@ -611,7 +611,7 @@ var JsNumberFormatter = {
                     }
                     if (maskCh === '0') {
                         // zero padding
-                        console.log('Zero pad');
+                        if (log) { console.log('Zero pad'); }
                         result += '0';
                     } else if (maskCh == '#') {
                         // no more padding or formatting chars, break the mask
@@ -993,6 +993,6 @@ NaNError.prototype = Error.prototype;
 
 
 // export for RequireJS support (mainly to allow mocha to work)
-if (module) {
+if (window.module) {
     module.exports.nf = JsNumberFormatter;
 }

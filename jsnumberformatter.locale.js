@@ -120,6 +120,6 @@ JsNumberFormatter.locales = {
 
 
 // export for RequireJS support (mainly to allow mocha to work)
-if (module) {
+if (window.module) {
     module.exports.nfl = JsNumberFormatter.locales;
 }
