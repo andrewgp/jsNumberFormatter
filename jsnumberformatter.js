@@ -51,7 +51,7 @@ var JsNumberFormatter = {
     consts: {
         regexStrNonNumeric: '[^0-9\\.]',
         negativeParanRegex: '^\\(([^\\)]+)\\)$',
-        numberRegex: new RegExp('^([0-9]*)\\.([0-9]*)$'),
+        numberRegex: new RegExp('^(-?[0-9]*)\\.([0-9]*)$'),
         maskCharsStr: '[0#]',
         maskCharsRegex: new RegExp('[0#]', 'g')
     },
