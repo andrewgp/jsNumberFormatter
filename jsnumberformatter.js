@@ -656,7 +656,9 @@ var JsNumberFormatter = {
                 }
                 
                 if (digitPos >= 0) {
-                    console.log('Digit Pos:' + digitPos);
+                    if (log) {
+                        console.log('Digit Pos:' + digitPos);
+                    }
                     // still numbers to insert
                     if (maskCh === '0' || maskCh == '#') {
                         var digit = pureNumericStr.charAt(digitPos);
