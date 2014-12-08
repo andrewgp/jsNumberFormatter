@@ -611,7 +611,9 @@ var JsNumberFormatter = {
                     }
                     if (maskCh === '0') {
                         // zero padding
-                        console.log('Zero pad');
+                        if(log) {
+                            console.log('Zero pad'); 
+                        }
                         result += '0';
                     } else if (maskCh == '#') {
                         // no more padding or formatting chars, break the mask
