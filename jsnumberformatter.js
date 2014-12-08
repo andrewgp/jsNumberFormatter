@@ -611,7 +611,9 @@ var JsNumberFormatter = {
                     }
                     if (maskCh === '0') {
                         // zero padding
-                        console.log('Zero pad');
+                        if(log) {
+                            console.log('Zero pad'); 
+                        }
                         result += '0';
                     } else if (maskCh == '#') {
                         // no more padding or formatting chars, break the mask
@@ -656,7 +658,9 @@ var JsNumberFormatter = {
                 }
                 
                 if (digitPos >= 0) {
-                    console.log('Digit Pos:' + digitPos);
+                    if (log) {
+                        console.log('Digit Pos:' + digitPos);
+                    }
                     // still numbers to insert
                     if (maskCh === '0' || maskCh == '#') {
                         var digit = pureNumericStr.charAt(digitPos);
