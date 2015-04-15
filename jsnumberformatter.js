@@ -3,11 +3,11 @@
  * COMPONENT: -
  * DESCRIPTION: A pure JS implementation of number parsing and formatting.
  * FILENAME: jsNumberFormatter.js
- * DATE: 2014-06-11
+ * DATE: 2014-06-17
  * AUTHOR: Andrew G Parry
  * SOURCE: https://github.com/andrewgp/jsNumberFormatter
  * 
- * VERSION: 0.1
+ * VERSION: 0.3
  * STATE: Alpha
  * DEPENDANCIES: -
  * 

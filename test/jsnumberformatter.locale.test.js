@@ -6,7 +6,8 @@ var nfl = require('../jsnumberformatter.locale.js').nfl;
 
 // tests
 describe('parseNumberSimple.locale', function() {
-    describe('Positive Tests', function() {
+    // countries
+    describe('Positive Country Parse Tests', function() {
         describe('Test1-Parse', function() {
             it('Parse to 1', function() {
                 var options = new nf.locales.parseOptions('gb');
@@ -32,11 +33,24 @@ describe('parseNumberSimple.locale', function() {
                 assert.equal(number, 1);
             });
         });
+        
+    });
+    
+    // locales
+    describe('Positive Locale Parse Tests', function() {
+        describe('Test1-Parse', function() {
+            it('Parse to 1', function() {
+                var options = new nf.locales.parseOptions('en_US');
+                var number = nf.parseNumberSimple('1.00', options, true);
+                assert.equal(number, 1);
+            });
+        });
     });
 });
 
 describe('formatNumberSimple.locale', function() {
-    describe('Positive Tests', function() {
+    // countries
+    describe('Positive Country Format Tests', function() {
         describe('Test1-Format', function() {
             it('Format to 1', function() {
                 var options = new nf.locales.formatOptions('gb');
@@ -51,6 +65,17 @@ describe('formatNumberSimple.locale', function() {
                                 .specifyDecimalMask('00');
                 var number = nf.formatNumber(1, options, true);
                 assert.equal(number, '1,00');
+            });
+        });
+    });
+    
+    // locales
+    describe('Positive Locale Format Tests', function() {
+        describe('Test1-Format', function() {
+            it('Format to 1', function() {
+                var options = new nf.locales.formatOptions('en_US');
+                var number = nf.formatNumber(1, options, true);
+                assert.equal(number, '1');
             });
         });
     });

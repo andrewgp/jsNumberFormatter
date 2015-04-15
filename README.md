@@ -4,7 +4,7 @@ jsNumberFormatter
 JavaScript Number formatting &amp; parsing library - Pure stand-alone javascript
 
 + Status: Alpha
-+ Version 0.2
++ Version 0.3
 
 This is intended to be the basis of my rewrite of the jQuery plugin jQuery-NumberFormatter (https://code.google.com/p/jquery-numberformatter/), providing base methods that do not require jQuery at all or any other dependency.
 
@@ -34,6 +34,11 @@ Features: (see the jQuery plugin for a rough idea, I will be adding many more al
 + Modular parsing
   + Allows you to add functions to run during the parsing
 + Togglable logging to console
+
+Major Items TODO:
+
+- Need to read CLDR data in some form, suggest a pre-building script to pull the JSON data into a JS ref file for specific languages needed
+- Seperate locale data for currencies
 
 ## Usage:
 
