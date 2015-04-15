@@ -611,7 +611,9 @@ var JsNumberFormatter = {
                     }
                     if (maskCh === '0') {
                         // zero padding
-                        console.log('Zero pad');
+                        if (log) {
+                            console.log('Zero pad');
+                        }
                         result += '0';
                     } else if (maskCh == '#') {
                         // no more padding or formatting chars, break the mask
@@ -656,7 +658,9 @@ var JsNumberFormatter = {
                 }
                 
                 if (digitPos >= 0) {
-                    console.log('Digit Pos:' + digitPos);
+                    if (log) {
+                        console.log('Digit Pos:' + digitPos);
+                    }
                     // still numbers to insert
                     if (maskCh === '0' || maskCh == '#') {
                         var digit = pureNumericStr.charAt(digitPos);
@@ -822,9 +826,13 @@ var JsNumberFormatter = {
             this.parse = function(origValue, currentValue, context) {
                 // strip out the group occurrances
                 var groupSep = context.options.groupStr;
-                console.log(groupSep);
+                if (context.log) {
+                    console.log(groupSep);
+                }
                 groupSep = groupSep.replace(new RegExp('\\.', 'g'), '\\.');
-                console.log(groupSep);
+                if (context.log) {
+                    console.log(groupSep);
+                }
                 currentValue = currentValue.replace(new RegExp(groupSep, 'g'), '');
                 if (context.log) {
                     console.log('[' + currentValue + '] Removed groups...');
