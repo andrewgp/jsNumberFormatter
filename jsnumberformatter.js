@@ -7,7 +7,7 @@
  * AUTHOR: Andrew G Parry
  * SOURCE: https://github.com/andrewgp/jsNumberFormatter
  * 
- * VERSION: 0.3
+ * VERSION: 0.4
  * STATE: Alpha
  * DEPENDANCIES: -
  * 

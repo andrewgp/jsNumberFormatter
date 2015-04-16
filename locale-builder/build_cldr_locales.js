@@ -8,7 +8,7 @@
  * SOURCE: https://github.com/andrewgp/jsNumberFormatter
  * 
  * VERSION: 0.1
- * STATE: Prototype
+ * STATE: Alpha
  * DEPENDANCIES: -
  * 
  * This just proves offline support to read online CLDR (JSON) data and create
@@ -20,8 +20,16 @@
  * 
  * STATUS: Working but needs more work
  * 
+ * TODO:
+ * 
+ * 1. Perhaps best to have locale names in english and not native/local lang.
+ * 2. Add currency support
+ * 3. Add percentage support
+ * 4. Escape single quotes in data write
+ * 
  * CHANGELOG:
  * 2015-04-15   AP  Added
+ * 2015-04-16   AP  Improved with file saving support etc.
  * 
  * LICENSE:
  * 
@@ -51,22 +59,30 @@
 //
 
 // filter IN these items
-var localeInFilter = [ ];// 'en_GB', 'en_US' ];
+var localeInFilter = [ ];
 // filter OUT these items
 var localeOutFilter = [ ];
 
 //
-// setup
+// dependencies
 //
 
 var http = require('http');
+var fs = require('fs');
 
 //
-// Runtime
+// runtime
 //
+
+// read params
+var useFile = true;
+if (process.argv.length > 2) {
+    useFile = process.argv[2];
+}
 
 listLocales();
 
+var localeLimitNum = 0;
 var locales = [];
 var localeData = [];
 
@@ -103,6 +119,12 @@ function listLocales() {
                         }
                     }
                 }
+                
+                // check limit
+                if (localeLimitNum > 0 && locales.length == localeLimitNum) {
+                    console.log('Stopping at limit of ' + localeLimitNum);
+                    break;
+                }
             }
             console.log('Found ' + locales.length + ' locales');
             
@@ -113,12 +135,10 @@ function listLocales() {
     http.request(options, callback).end();
 }
 
-// Async task (same in all examples in this chapter)
 function async(arg, callback) {
-    //console.log('do something with \''+arg+'\', return 1 sec later');
     setTimeout(function() { getLocale(arg, callback); }, 200);
 }
-// Final task (same in all the examples)
+
 function final() {
     console.log('Done');
     
@@ -146,29 +166,60 @@ function final() {
         }
     }
     
-    console.log('=========== JS File Start ===========');
+    // build content as a big string
     // TODO Parsing of the format mask
+    var cont = '// base namespace re-declaration\n';
+    cont += 'var JsNumberFormatter = JsNumberFormatter || require(\'../jsnumberformatter.js\').nf || {};\n';
+    cont += 'JsNumberFormatter.locales = JsNumberFormatter.locales || require(\'../jsnumberformatter.locale.js\').nfl || {};\n\n';
+    cont += '// locales data namespace\n';
+    cont += 'JsNumberFormatter.locales.data = {\n';
+    cont += '\tdecimals: {\n\t\tlocales: [\n';
     for (var grpIdx = 0; grpIdx < groupedLocales.length; grpIdx++) {
         var group = groupedLocales[grpIdx];
         
-        console.log('[');
+        cont += '\t\t\t// #' + grpIdx + '\n';
+        cont += '\t\t\t[\n';
         for (var i = 0; i < group.length; i++) {
-            console.log('\'' + group[i].locale + '\',' + '// ' + group[0].locale + ' (' + group[0].id + ')');
+            cont += '\t\t\t\t\'' + group[i].locale + '\',';
+            cont += '\t// ' + group[0].name + ' (' + group[0].id + ')\n';
         }
-        console.log('],');
-        console.log('[');
+        cont += '\t\t\t],\n';
+        cont += '\t\t\t[ [ ';
         for (var i = 0; i < group[0].numberSystem.length; i++) {
-            console.log('\'' + group[0].numberSystem[i] + '\',');
+            if (i > 0) {
+                cont += ', ';
+            }
+            var value = 
+            cont += '\'' + group[0].numberSystem[i] + '\'';
         }
-        console.log('],');
-        console.log('');
+        cont += '], [ ';
+        for (var i = 0; i < group[0].decimalFormat.length; i++) {
+            if (i > 0) {
+                cont += ', ';
+            }
+            cont += '\'' + group[0].decimalFormat[i] + '\'';
+        }
+        cont += ' ] ],\n';
+        cont += '\n';
     }
-    console.log('=========== JS File End ===========');
+    cont += '\t\t],\n\t}\n};';
+    
+    if (useFile) {
+        // write to file
+        fs.writeFile('locales_cldr.js', cont, function (err) {
+            if (err) {
+                throw err;
+            }
+            console.log('File saved');
+        });
+    } else {
+        // write to console
+        console.log('=========== JS File Start ===========');
+        console.log(cont);
+        console.log('=========== JS File End ===========');
+    }
 }
 
-// A simple async series:
-// var items = [ 'en_GB', 'en_US' ];
-// var results = [];
 function series(item) {
   if(item) {
     async( item, function(result) {
@@ -179,7 +230,6 @@ function series(item) {
     return final();
   }
 }
-// series(items.shift());
 
 function getLocale(locale, callback) {
     console.log('Getting ' + locale);
@@ -201,9 +251,17 @@ function getLocale(locale, callback) {
             console.log('locale= ' + locale + ' ...');
             var json = JSON.parse(str);
             var id = json.identity.generation['@date'];
-            console.log('ID= ' + id);
+            var name = json.localeDisplayNames.languages[locale];
+            if (!name) {
+                // build from language + terriority
+                var comps = locale.split('_', 2);
+                name = json.localeDisplayNames.languages[comps[0]] + ' (' + json.localeDisplayNames.territories[comps[1]] + ')';
+            }
+            
+            console.log('Name = ' + name + ' ID= ' + id);
             data.locale = locale;
             data.id = id;
+            data.name = name;
             
             var numbers = json.numbers;
 
@@ -219,7 +277,7 @@ function getLocale(locale, callback) {
             
             data.numberSystem = numSys;
             data.decimalFormat = decFormat;
-            data.grouping = numSys[0] + numSys[1] + numSys[2];
+            data.grouping = numSys[0] + numSys[1] + numSys[2] + decFormat[0];
             callback(data);
         });
     };
@@ -231,7 +289,11 @@ function parseNumberSystem(numbers) {
     var defNumSys = numbers.defaultNumberingSystem;
     var numSys = numbers['symbols-numberSystem-' + defNumSys];
     if (numSys) {
-        return [ numSys.minusSign, numSys.group, numSys.decimal ];
+        var group = numSys.group;
+        if (group === ' ') {
+            group = ' ';
+        }
+        return [ numSys.minusSign, group, numSys.decimal ];
     }
     return [ '', '', '' ];
 }
@@ -239,5 +301,21 @@ function parseNumberSystem(numbers) {
 function parseDecimalFormat(numbers, name) {
     var decimalFormats = numbers.decimalFormats;
     var format = decimalFormats[name].decimalFormat.pattern;
-    return format;
+    
+    // parse decimal points
+    var decPos = format.lastIndexOf('.');
+    var decSize = 0;
+    if (decPos && decPos > 0) {
+        decSize = format.length - (decPos + 1);
+    }
+    
+    // parse groups
+    // TODO support multiple groups
+    var grpPos = format.lastIndexOf(',');
+    var grpSize = 0;
+    if (grpPos && grpPos > 0) {
+        grpSize = format.length - (decSize + 1) - (grpPos + 1);
+    }
+    
+    return [ format, decSize, grpSize ];
 }

@@ -3,6 +3,8 @@ var assert = require('assert');
 
 var nf = require('../jsnumberformatter.js').nf;
 var nfl = require('../jsnumberformatter.locale.js').nfl;
+// decimal locale data
+var nfldd = require('../locale-data/jsnumberformatter.locale.decimal.superset.js').nfldd;
 
 // tests
 describe('parseNumberSimple.locale', function() {

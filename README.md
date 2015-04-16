@@ -4,13 +4,18 @@ jsNumberFormatter
 JavaScript Number formatting &amp; parsing library - Pure stand-alone javascript
 
 + Status: Alpha
-+ Version 0.3
++ Version 0.4
 
 This is intended to be the basis of my rewrite of the jQuery plugin jQuery-NumberFormatter (https://code.google.com/p/jquery-numberformatter/), providing base methods that do not require jQuery at all or any other dependency.
 
-Supports many parsing and formatting options, including a module for locale support.
+Supports many parsing and formatting options, including a module for locale support and data files for the locales.
 
 Looking fairly good now, still a bit of work to come.
+
+Twitter have a nice JS library with CLDR support here - https://github.com/twitter/twitter-cldr-js it's more aimed at Rails but I understand it works standalone.
+I suppose a good reason not to use that project is the lack of options, flexibility/customisation and parsing support (as I see it).
+Obviously the goal is to match and surpass the number support found in that library (including currencies, percentages, rounding etc.). This will also be more modular as not everyone needs all of those areas of functionality.
+
 
 =================
 
@@ -67,7 +72,7 @@ c) no locale but with custom negative number mask (regex)
 
 d) NL locale, parsing dollars (stripping non-numerics)
 ```javascript
-   var options = new JsNumberFormatter.locales.parseOptions('nl')
+   var options = new JsNumberFormatter.locales.parseOptions('nl_NL')
                                 .specifyRemoveBadCh(true)
                                 .specifyNegativeMatch('^.*-(.+)');
    var number = JsNumberFormatter.parseNumberSimple('$-1.000.123,45', options, true);
@@ -98,6 +103,19 @@ b) espanol locale formatting
                     .specifyDecimalMask('00');
    var number = JsNumberFormatter.formatNumber(1, options, true);
 ```
+
+=================
+
+## Files
+
+jsnumberformatter.js - The main parsing and formatting
+jsnumberformatter.locale.js - The locale support module
+
+locale-data/jsnumberformatter.locale.*.js - Support data files for locale (needs 1 loaded and 1 only for locale support)
+
+locale-builder/*.js - Files for building the locale data support files (mainly from CLDR repo.)
+
+test/*.js - Mocha unit tests
 
 =================
 
