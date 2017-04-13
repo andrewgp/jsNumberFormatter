@@ -10,16 +10,16 @@
  * VERSION: 0.4
  * STATE: Alpha
  * DEPENDANCIES: -
- * 
+ *
  * STATUS:
- * 
+ *
  * + Formatting
  *   - Needs some tuning of the repeating groups
- * 
+ *
  * CHANGELOG:
- * 
+ *
  * LICENSE:
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2014 Andrew G Parry
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,10 +28,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -42,11 +42,11 @@
  */
 
 var JsNumberFormatter = {
-    
-    
+
+
     /*  CONSTANTS   */
-    
-    
+
+
     // all constants
     consts: {
         regexStrNonNumeric: '[^0-9\\.]',
@@ -55,18 +55,18 @@ var JsNumberFormatter = {
         maskCharsStr: '[0#]',
         maskCharsRegex: new RegExp('[0#]', 'g')
     },
-    
-    
+
+
     /*  PARSING */
-    
-    
+
+
     /**
      * Parses a number very simply and quickly.
      */
     parseNumberSimple: function(numberString, options, log, extraModules) {
         // handle log param
         log = typeof log !== 'undefined' ? log : false;
-        
+
         // check other params
         if (log) {
             console.log('[' + numberString + '] Checking params...');
@@ -82,11 +82,11 @@ var JsNumberFormatter = {
             console.log('[' + numberString + '] Options=' + options.print());
             console.log('[' + numberString + '] Params OK');
         }
-        
+
         var newNumberString = numberString;
         var context = new this.parseContext(log, options, this);
         var operators = options.compileOperators(this, false);
-        
+
         // process operators
         var i;
         for (i = 0; i < operators.operators.length; i++) {
@@ -97,7 +97,7 @@ var JsNumberFormatter = {
                 newNumberString = operators.operators[i].parse(numberString, newNumberString, context);
             }
         }
-        
+
         // post-process operators
         context.isPost = true;
         for (i = 0; i < operators.operators.length; i++) {
@@ -108,7 +108,7 @@ var JsNumberFormatter = {
                 newNumberString = operators.operators[i].postParse(numberString, newNumberString, context);
             }
         }
-        
+
         // finally try to parse/force to a javascript number (if needed)
         var result;
         if (typeof newNumberString === 'Number') {
@@ -119,42 +119,42 @@ var JsNumberFormatter = {
         if (isNaN(result)) {
             throw new NaNError();
         }
-        
+
         // final rounding
         if (options.roundingDecimalPlaces >= 0) {
             result = JsNumberFormatter.util.round(result, options.roundingDecimalPlaces, log,
                                                   result < 0, options.roundingMode);
         }
-        
+
         if (log) {
             console.log('Output: ' + result);
         }
-        
+
         return result;
     },
-    
+
     // holder of the operators (functions in this case) that can be used to process a string parse
     parseOperators: function() {
         this.operators = [ ];
-        
+
         this.add = function(op) {
-            this.operators[this.operators.length] = op; 
+            this.operators[this.operators.length] = op;
         };
     },
-    
+
     // context when operators are called during parsing
     parseContext: function(log, options, nf) {
         this.log = log;
         this.options = options;
         this.nf = nf;
-        
+
         this.isNegative = false;
-        
+
         this.isPerc = false;
-        
+
         this.isPost = false;
     },
-    
+
     // options used during parsing
     parseNumberSimpleOptions: function() {
         this.decimalStr = '.';
@@ -162,21 +162,21 @@ var JsNumberFormatter = {
         this.strict = false;
         this.trim = true;
         this.removeBadCh = false;
-        
+
         // negative numbers support
         this.negativeMatch = new RegExp('^-(.+)');
-        
+
         // percentage support
         this.percEnabled = false;
         this.percMatch = new RegExp('^(.+)%');
-        
+
         // operators cache
         this.operatorsCached = null;
-        
+
         // rounding
         this.roundingDecimalPlaces = -1; // unlimited
         this.roundingMode = JsNumberFormatter.util.RoundHalfUp;
-        
+
         /**
          * Specifies all the main options.
          */
@@ -198,10 +198,10 @@ var JsNumberFormatter = {
             this.specifyTrim(trim);
             this.specifyRemoveBadCh(removeBadCh);
             this.specifyNegativeMatch(negativeMatch);
-            
+
             return this;
         };
-        
+
         this.specifyStrict = function(strict) {
             if (typeof strict !== 'undefined') {
                 if (typeof strict !== 'boolean') {
@@ -211,7 +211,7 @@ var JsNumberFormatter = {
             }
             return this;
         };
-        
+
         this.specifyTrim = function(trim) {
             if (typeof trim !== 'undefined') {
                 if (typeof trim !== 'boolean') {
@@ -221,7 +221,7 @@ var JsNumberFormatter = {
             }
             return this;
         };
-        
+
         this.specifyRemoveBadCh = function(removeBadCh) {
             if (typeof removeBadCh !== 'undefined') {
                 if (typeof removeBadCh !== 'boolean') {
@@ -231,7 +231,7 @@ var JsNumberFormatter = {
             }
             return this;
         };
-        
+
         this.specifyNegativeMatch = function(negativeMatch) {
             if (typeof negativeMatch !== 'undefined') {
                 if (typeof negativeMatch !== 'string') {
@@ -241,7 +241,7 @@ var JsNumberFormatter = {
             }
             return this;
         };
-        
+
         /**
          * Toggles and specifies percentage detection.
          */
@@ -255,7 +255,7 @@ var JsNumberFormatter = {
             }
             return this;
         };
-        
+
         this.specifyRounding = function(roundingMode, decimalPlaces) {
             if (typeof roundingMode === 'undefined') {
                 throw new TypeError('Expecting a number for roundingMode param');
@@ -272,7 +272,7 @@ var JsNumberFormatter = {
             this.roundingMode = roundingMode;
             return this;
         };
-        
+
         this.print = function() {
             return 'parseNumberSimpleOptions{decimalStr:"' + this.decimalStr
                 + '",groupStr:"' + this.groupStr
@@ -282,11 +282,11 @@ var JsNumberFormatter = {
                 + '",negativeMatch:"' + this.negativeMatch
                 + '"}';
         };
-        
+
         this.compileOperators = function(nf, rebuild) {
             if (this.operatorsCached === null || rebuild) {
                 this.operatorsCached = new nf.parseOperators();
-                
+
                 // add operators
                 if (this.trim) {
                     this.operatorsCached.add(new JsNumberFormatter.modules.Trim());
@@ -304,19 +304,19 @@ var JsNumberFormatter = {
             }
             return this.operatorsCached;
         };
-	},
-    
-    
+    },
+
+
     /*  FORMATTING  */
-    
-    
+
+
     /**
      * Formats a number (object) into a string, based on the options.
      */
     formatNumber: function(number, options, log) {
         // handle log param
         log = typeof log !== 'undefined' ? log : false;
-        
+
         // check other params
         if (log) {
             console.log('[' + number + '] Checking params...');
@@ -329,7 +329,7 @@ var JsNumberFormatter = {
             console.log('[' + number + '] Options=' + options.print());
             console.log('[' + number + '] Params OK');
         }
-        
+
         // Compile masks
         if (!options.compiled) {
             if (log) {
@@ -337,25 +337,25 @@ var JsNumberFormatter = {
             }
             options.compile(new this.formatMaskCompiled(options.groupMaskStr), new this.formatMaskCompiled(options.decimalMaskStr), log);
         }
-        
+
         // get just the decimal part length
         var decimalLen = 0;
         var match = this.consts.numberRegex.exec(number);
         if (match) {
             decimalLen = match[2].length;
         }
-        
+
         // do any rounding
         if (options.decimalMaskStr.length < decimalLen) {
             number = JsNumberFormatter.util.round(number, options.decimalMaskStr.length, log,
                                                   number < 0, options.roundingMode);
         }
-        
+
         // break up number into 2 strings, 1 for the integer and 1 for the decimals
         if (log) {
             console.log('Splitting number to parts...');
         }
-        
+
         match = this.consts.numberRegex.exec(number);
         var integerPartStr;
         var decimalPartStr;
@@ -372,19 +372,19 @@ var JsNumberFormatter = {
         if (log) {
             console.log('Parts=integer:' + integerPartStr + ',decimal:' + decimalPartStr);
         }
-        
+
         // apply group mask
         if (log) {
             console.log('Applying group mask...');
         }
         var formatterIntPartStr = options.groupMask.apply(integerPartStr);
-        
+
         // apply decimal mask
         if (log) {
             console.log('Applying decimal mask...');
         }
         var formatterDecPartStr = options.decimalMask.apply(decimalPartStr);
-        
+
         // build final response
         // TODO needs more here
         var result;
@@ -393,7 +393,7 @@ var JsNumberFormatter = {
         } else {
             result = formatterIntPartStr;
         }
-        
+
         // apply prefix & postfix (if available)
         if (options.prefix !== null) {
             result = options.prefix + result;
@@ -401,13 +401,13 @@ var JsNumberFormatter = {
         if (options.postfix !== null) {
             result = result + options.postfix;
         }
-        
+
         if (log) {
             console.log('Result=' + result);
         }
         return result;
     },
-    
+
     formatNumberOptions: function() {
         this.groupMaskStr = ',###';
         this.decimalSeperatorStr = '.';
@@ -415,16 +415,16 @@ var JsNumberFormatter = {
         this.negativeMaskStr = '-(.+)';
         this.prefix = null;
         this.postfix = null;
-        
+
         this.groupMask = null;
         this.decimalMask = null;
         this.compiled = false;
-        
+
         this.numberMaskValidRegex = new RegExp('[#0]', 'g');
-        
+
         // rounding support
         this.roundingMode = JsNumberFormatter.util.RoundHalfUp;
-        
+
         this.specifyAll = function(groupMaskStr, decimalMaskStr, decimalSeperatorStr, negativeMaskStr) {
             // check basic params integrity and handle actually apply the changes
             if (typeof groupMaskStr !== 'undefined') {
@@ -451,21 +451,21 @@ var JsNumberFormatter = {
                 }
                 this.negativeMaskStr = negativeMaskStr;
             }
-            
+
             // validate param values
             var match = groupMaskStr.match(this.numberMaskValidRegex);
             if (!match || match.length === 0) {
                 throw new Error('groupMaskStr must have at least 1 "0" or "#" char');
             }
-            
+
             match = decimalMaskStr.match(this.numberMaskValidRegex);
             if (!match || match.length === 0) {
                 throw new Error('decimalMaskStr must have at least 1 "0" or "#" char');
             }
-            
+
             return this;
         };
-        
+
         this.specifyDecimalMask = function(decimalMaskStr) {
             var match = decimalMaskStr.match(this.numberMaskValidRegex);
             if (!match || match.length === 0) {
@@ -474,7 +474,7 @@ var JsNumberFormatter = {
             this.decimalMaskStr = decimalMaskStr;
             return this;
         };
-        
+
         this.specifyFixes = function(prefix, postfix) {
             this.prefix = prefix;
             if (typeof postfix !== 'undefined') {
@@ -485,7 +485,7 @@ var JsNumberFormatter = {
             }
             return this;
         };
-        
+
         this.specifyRounding = function(roundingMode) {
             if (typeof roundingMode === 'undefined') {
                 throw new TypeError('Expecting a number for roundingMode param');
@@ -496,7 +496,7 @@ var JsNumberFormatter = {
             this.roundingMode = roundingMode;
             return this;
         };
-        
+
         this.print = function() {
             return 'parseNumberSimpleOptions{groupMaskStr:"' + this.groupMaskStr
                 + '",decimalMaskStr:"' + this.decimalMaskStr
@@ -504,14 +504,14 @@ var JsNumberFormatter = {
                 + '",negativeMaskStr:"' + this.negativeMaskStr
                 + '"}';
         };
-        
+
         this.compile = function(groupMask, decimalMask, log) {
             if (!this.compiled) {
                 this.groupMask = groupMask;
                 this.groupMask.reversed = true;
                 this.groupMask.repeating = true;
                 this.groupMask.compile(log);
-                
+
                 this.decimalMask = decimalMask;
                 this.decimalMask.reversed = false;
                 this.decimalMask.repeating = false;    // TODO allow repeating here
@@ -519,24 +519,24 @@ var JsNumberFormatter = {
             }
         };
     },
-    
+
     formatMaskCompiled: function(maskStr) {
         this.maskStr = maskStr;
         this.repeating = false;
         this.reversed = false;
-        
+
         this.compiled = false;
         this.maskDigitSize = -1;
-        
+
         this.roundingMode = JsNumberFormatter.util.RoundHalfUp;
-        
+
         this.apply = function(pureNumericStr, log) {
             if (!this.compiled) {
                 throw new Error('Mask not compiled');
             }
-            
+
             pureNumericStr = '' + pureNumericStr;
-            
+
             if (log) {
                 console.log('Applying mask:"' + this.maskStr + '",reversed=' + this.reversed + ',input="' + pureNumericStr + '"');
             }
@@ -554,7 +554,7 @@ var JsNumberFormatter = {
                         }
                         var bottomBound = pos - this.maskDigitSize < 0 ? 0 : pos - this.maskDigitSize;
                         var subDigits = strLen === 1 ? ('' + pureNumericStr).substring(bottomBound, pos) : pureNumericStr.substring(bottomBound, pos);
-                        
+
                         var newStr = this._applyReverseMask(maskStr, subDigits, bottomBound > 0, log);
                         if (newStr === '') {
                             break;
@@ -564,14 +564,14 @@ var JsNumberFormatter = {
                 } else {
                     // TODO
                 }
-                
+
                 return result;
             } else {
                 result = this.reversed ? this._applyReverseMask(maskStr, pureNumericStr, false, log) : this._applyMask(maskStr, pureNumericStr, log);
             }
             return result;
         };
-        
+
         this.compile = function(log) {
             var match = this.maskStr.match(new RegExp('[0#]', 'g'));
             this.maskDigitSize = match.length;
@@ -580,19 +580,19 @@ var JsNumberFormatter = {
             }
             this.compiled = true;
         };
-        
+
         this._applyMask = function(maskStr, pureNumericStr, log) {
             var result = '';
             // sanity check
             if (maskStr.length < pureNumericStr.length) {
                 throw new Error('Mask is not long enough, mask:"' + maskStr + '",number="' + pureNumericStr + '"');
             }
-            
+
             // walk through mask and number together
             var strLen = typeof pureNumericStr.length === 'undefined' ? 1 : pureNumericStr.length;
             for (var i = 0; i < maskStr.length; i++) {
                 var maskCh = maskStr.charAt(i);
-                
+
                 if (i < strLen) {
                     // still numbers to insert
                     var digit = pureNumericStr.charAt(i);
@@ -611,33 +611,31 @@ var JsNumberFormatter = {
                     }
                     if (maskCh === '0') {
                         // zero padding
-                        if (log) {
-                            console.log('Zero pad');
-                        }
+                        if (log) { console.log('Zero pad'); }
                         result += '0';
                     } else if (maskCh == '#') {
                         // no more padding or formatting chars, break the mask
                         break;
                     } else {
                         result += maskCh;
-                        
+
                         // no more padding or formatting chars, break the mask
                         break;
                     }
                 }
             }
-            
+
             // special consideration to completely optional masks
             if (result == '0' && maskStr.charAt(maskStr.length - 1) == '#') {
                 result = '';
             }
-            
+
             if (log) {
                 console.log('Mask result=' + result);
             }
             return result;
         };
-        
+
         this._applyReverseMask = function(maskStr, pureNumericStr, areMore, log) {
             if (log) {
                 console.log('Applying reverse mask:"' + maskStr + '"areMore:' + areMore + ',str:"' + pureNumericStr + '"');
@@ -647,7 +645,7 @@ var JsNumberFormatter = {
             if (maskStr.length < pureNumericStr.length) {
                 throw new Error('Mask is not long enough, mask:"' + maskStr + '",number="' + pureNumericStr + '"');
             }
-            
+
             // walk through mask and number together (backwards)
             var digitPos = pureNumericStr.length - 1;
             var holdChars = null;
@@ -656,7 +654,7 @@ var JsNumberFormatter = {
                 if (log) {
                     console.log('Mask ch:' + maskCh);
                 }
-                
+
                 if (digitPos >= 0) {
                     if (log) {
                         console.log('Digit Pos:' + digitPos);
@@ -668,7 +666,7 @@ var JsNumberFormatter = {
                             console.log('Digit:' + digit);
                         }
                         digitPos--;
-                        
+
                         // write out any held chars
                         if (holdChars !== null) {
                             if (log) {
@@ -677,7 +675,7 @@ var JsNumberFormatter = {
                             result = holdChars + result;
                             holdChars = null;
                         }
-                        
+
                         // write digit as-is
                         result = digit + result;
                     } else {
@@ -698,7 +696,7 @@ var JsNumberFormatter = {
                             result = holdChars + result;
                             holdChars = null;
                         }
-                        
+
                         // zero padding
                         result = '0' + result;
                     } else if (maskCh == '#') {
@@ -715,38 +713,38 @@ var JsNumberFormatter = {
             if (areMore && holdChars !== null) {
                 result = holdChars + result;
             }
-            
+
             // special consideration to completely optional masks
             if (result == '0' && maskStr.charAt(maskStr.length - 1) == '#') {
                 result = '';
             }
-            
+
             if (log) {
                 console.log('Mask result=' + result);
             }
             return result;
         };
     },
-    
-    
+
+
     /*  UTILITY  */
-    
-    
+
+
     util: {
         RoundHalfUp: 0,
         RoundHalfDown: 1,
         RoundAwayFromZero: 2,
         RoundTowardsZero: 3,
-        
+
         round: function(value, decimals, log, isNeg, mode) {
             if (typeof mode === 'undefined') {
                 mode = JsNumberFormatter.util.RoundHalfUp;
             }
-            
+
             if (log) {
                 console.log('Rounding ' + value + ' using mode=' + mode);
             }
-            
+
             var result;
             if (mode === JsNumberFormatter.util.RoundHalfUp) {
                 // half-up
@@ -773,13 +771,13 @@ var JsNumberFormatter = {
             } else {
                 throw new Error('Unknown rounding mode:"' + mode);
             }
-            
+
             if (log) {
                 console.log('[' + value + '] Rounded to ' + result);
             }
             return result;
         },
-        
+
         HashMap: function() {
             this._dict = {};
             this._shared = {id: 1};
@@ -797,27 +795,27 @@ var JsNumberFormatter = {
                 if (typeof this._dict[key] === 'undefined') {
                     this._size++;
                 }
-                
+
                 this._dict[key] = value;
                 return this;
             };
-            
+
             this.get = function get(key) {
                 if (typeof key == "object") {
                     return this._dict[key.hasOwnProperty._id];
                 }
                 return this._dict[key];
             };
-            
+
             this.size = function() {
                 return this._size;
             };
         }
     },
-    
-    
+
+
     /*  MODULES  */
-    
+
     /**
      * Module for basic number parsing.
      */
@@ -837,7 +835,7 @@ var JsNumberFormatter = {
                 if (context.log) {
                     console.log('[' + currentValue + '] Removed groups...');
                 }
-                
+
                 // replace the decimal separator (if needed)
                 if (context.options.decimalStr != '.') {
                     currentValue = currentValue.replace(new RegExp(context.options.decimalStr, 'g'), '.');
@@ -845,7 +843,7 @@ var JsNumberFormatter = {
                         console.log('[' + currentValue + '] Replaced decimal point(s)...');
                     }
                 }
-                
+
                 // handle strict options
                 if (context.options.strict) {
                     // check that there is 0 or 1 occurrances of the decimal point
@@ -856,7 +854,7 @@ var JsNumberFormatter = {
                     if (count > 1) {
                         throw new Error('Input has more than 1 decimal point: ' + count);
                     }
-                    
+
                     if (!context.options.removeBadCh) {
                         // flag any non numerics
                         if (context.log) {
@@ -868,13 +866,13 @@ var JsNumberFormatter = {
                         }
                     }
                 }
-                
+
                 return currentValue;
             };
-            
+
             this.postParse = function(origValue, currentValue, context) { return currentValue; };
         },
-    
+
         BadChars: function() {
             this.parse = function(origValue, currentValue, context) {
                 if (context.options.removeBadCh) {
@@ -888,11 +886,11 @@ var JsNumberFormatter = {
                 }
                 return currentValue;
             };
-            
+
             this.postParse = function(origValue, currentValue, context) { return currentValue; };
         },
-    
-    
+
+
         /**
          * Module for trimming.
          */
@@ -906,10 +904,10 @@ var JsNumberFormatter = {
                 }
                 return currentValue;
             };
-            
+
             this.postParse = function(origValue, currentValue, context) { return currentValue; };
         },
-    
+
         NegativeNumber: function() {
             this.parse = function(origValue, currentValue, context) {
                 // determine if a negative number string or not
@@ -926,10 +924,10 @@ var JsNumberFormatter = {
                         }
                     }
                 }
-                
+
                 return currentValue;
             };
-        
+
             this.postParse = function(origValue, currentValue, context) {
                 // add prefix to parsed number if a negative one
                 if (context.isNegative) {
@@ -938,7 +936,7 @@ var JsNumberFormatter = {
                 return currentValue;
             };
         },
-    
+
         /**
          * Module for percentage handling.
          */
@@ -956,7 +954,7 @@ var JsNumberFormatter = {
                 }
                 return currentValue;
             };
-            
+
             this.postParse = function(origValue, currentValue, context) {
                 if (context.isPerc) {
                     // work out existing dps
@@ -966,14 +964,14 @@ var JsNumberFormatter = {
                     } else {
                         dpCount = 2;
                     }
-                    
+
                     // divide by 100
                     var preResult = new Number(currentValue);
                     currentValue = preResult /= 100;
-                    
+
                     // force some rounding to the dp we expected
                     currentValue = JsNumberFormatter.util.round(currentValue, dpCount, context.log, context.isNegative);
-                    
+
                     if (context.log) {
                         console.log('[' + currentValue + '] Converted to percentage...');
                     }
@@ -999,4 +997,6 @@ NaNError.prototype = Error.prototype;
 
 
 // export for RequireJS support (mainly to allow mocha to work)
-module.exports.nf = JsNumberFormatter;
+if (window.module) {
+    module.exports.nf = JsNumberFormatter;
+}
